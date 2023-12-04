@@ -30,7 +30,7 @@ def predict(directory, output_dir):
 
         # Save detections
         json.dump(detections[img_name], open(output_dir + f"/mobileSAM/detections/detections_{img_name}.json", "w"))
-    
+
     return detections
 
 def sam_prediction(model_path, image_pil, type="bbox", id_start=0):

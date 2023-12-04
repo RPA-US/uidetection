@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import torch
+import cv2
 from sahi import AutoDetectionModel
 from sahi.predict import get_sliced_prediction
 from shapely.geometry import Polygon
@@ -100,7 +101,10 @@ def json_inference_to_labelme(anns, type="bbox", id_start=0):
             y_points = ann["segments"]["y"]
             points = np.array([x_points, y_points]).T
 
-            if Polygon(points).is_valid == False:
+            try:
+                if Polygon(points).is_valid == False:
+                    continue
+            except:
                 continue
 
             res.append(
@@ -157,3 +161,29 @@ def sahi_predictions(model_path, image_pil, slice_width, slice_height, overlap, 
     torch.cuda.empty_cache() 
 
     return shapes
+
+
+def show_mappings(img_path, detected_shapes):
+    tint_colors = {}
+    for i in range(len(detected_shapes)):
+        if detected_shapes[i]["label"] not in tint_colors:
+            tint_colors[detected_shapes[i]["label"]] = (
+                np.random.randint(0, 255),
+                np.random.randint(0, 255),
+                np.random.randint(0, 255),
+            )
+
+    img = cv2.imread(img_path)
+    for i in range(len(detected_shapes)):
+        # Show both polygons (labeled and detected)
+        cv2.polylines(
+            img,
+            np.int32([detected_shapes[i]["points"]]),
+            True,
+            tint_colors[detected_shapes[i]["label"]],
+            2,
+        )
+
+    cv2.imshow("mappings", img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
