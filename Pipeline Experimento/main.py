@@ -2,6 +2,8 @@ import getopt, sys
 from tkinter import image_names
 
 import screen2som
+import yolo
+import mobileSAM
 import metrics
 import os
 
@@ -12,14 +14,21 @@ def image_experiment(directory):
 
     # Run screen2som
     screen2som_detections = screen2som.predict(directory, output_dir)
+    metrics.run_image(screen2som_detections, directory, "screen2som", output_dir)
+    metrics.run_image(screen2som_detections, directory, "screen2som-no-compare-classes", output_dir, compare_classes=False)
 
-    #TODO: Run YOLO detections
+    # Run YOLO detections
+    yolo_detections = yolo.predict(directory, output_dir)
+    metrics.run_image(yolo_detections, directory, "yolo", output_dir, compare_classes=False)
+
+    # Run MobileSAM detections
+    mobilesam_detections = mobileSAM.predict(directory, output_dir)
+    metrics.run_image(mobilesam_detections, directory, "mobileSAM", output_dir, compare_classes=False)
 
     #TODO: Run UIED detections
 
     #TODO: Run rpa-us detections
 
-    metrics.run_image(screen2som_detections, directory, "screen2som", output_dir)
 
 if __name__ == "__main__":
     # Remove 1st argument from the

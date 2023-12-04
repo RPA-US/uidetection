@@ -10,7 +10,7 @@ from sklearn.metrics import ConfusionMatrixDisplay
 from utils import *
 
 
-def run_image(detections, directory, technique, output_dir):
+def run_image(detections, directory, technique, output_dir, compare_classes=True):
     dataset_labels = load_dataset(directory)
     dataset_soms = labels_to_soms(copy.deepcopy(dataset_labels))
 
@@ -33,22 +33,24 @@ def run_image(detections, directory, technique, output_dir):
             labels.add(shape["label"])
     labels = list(labels)
 
-    save_class_metrics(detections, dataset_labels, mappings, labels, output_dir + f"/{technique}")
-    save_iou_metrics(detections, dataset_labels, mappings, labels, output_dir + f"/{technique}")
-    save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir + f"/{technique}")
+    save_class_metrics(detections, dataset_labels, mappings, labels, output_dir + f"/{technique}", compare_classes)
+    save_iou_metrics(detections, dataset_labels, mappings, labels, output_dir + f"/{technique}", compare_classes)
+    save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir + f"/{technique}", compare_classes)
 
 
 
-def save_class_metrics(detections, dataset_labels, mappings, labels, output_dir):
+def save_class_metrics(detections, dataset_labels, mappings, labels, output_dir, compare_classes):
     # Claculate precision, recall and confusion matrix
     label_count = {label: 0 for label in labels}
     label_precision = {label: 0 for label in labels}
     label_recall = {label: 0 for label in labels}
     num_det_shapes = {label: 0 for label in labels}
 
-    # y_pred and y_true for confusion matrix
-    y_pred = []
-    y_true = []
+    
+    if compare_classes:
+        # y_pred and y_true for confusion matrix
+        y_pred = []
+        y_true = []
     for img_name in dataset_labels.keys():
         shapes = dataset_labels[img_name]["shapes"]
         mapping_matrix = mappings[img_name]["mapping_matrix"]
@@ -71,19 +73,31 @@ def save_class_metrics(detections, dataset_labels, mappings, labels, output_dir)
                     )
                 )[0]
 
-                y_pred.append(detected_shape["label"])
-                y_true.append(shape["label"])
+                if compare_classes:
+                    y_pred.append(detected_shape["label"])
+                    y_true.append(shape["label"])
 
-                if shape["label"] == detected_shape["label"]:
+                if (not compare_classes) or shape["label"] == detected_shape["label"]:
                     label_precision[shape["label"]] += 1
                     label_recall[shape["label"]] += 1
 
-    label_precision = {
-        label: label_precision[label] / num_det_shapes[label]
-        if num_det_shapes[label] > 0
-        else 0
-        for label in label_precision
-    }
+    if compare_classes:
+        label_precision = {
+            label: label_precision[label] / num_det_shapes[label]
+            if num_det_shapes[label] > 0
+            else 0
+            for label in label_precision
+        }
+    else:
+        detected_shapes = 0
+        mapped_shapes = 0
+        for img_name in dataset_labels.keys():
+            detected_shapes += len(detections[img_name]["shapes"])
+            mapped_shapes += np.sum(mappings[img_name]["mapping_matrix"] > 0)
+
+        label_precision = {
+            "all": mapped_shapes / detected_shapes,
+        }
 
     label_recall = {
         label: label_recall[label] / label_count[label] for label in label_recall
@@ -119,18 +133,19 @@ def save_class_metrics(detections, dataset_labels, mappings, labels, output_dir)
     plt.ylabel("Recall")
     plt.savefig(output_dir + "/recall.png", bbox_inches="tight")
 
-    # Save Confusion Matrix
-    plt.rcParams["figure.figsize"] = [20, 10]
-    cm = ConfusionMatrixDisplay.from_predictions(
-        y_true,
-        y_pred,
-        normalize="true",
-        xticks_rotation=90,
-    )
-    cm.figure_.savefig(output_dir + "/confusion_matrix.png", bbox_inches="tight")
+    if compare_classes:
+        # Save Confusion Matrix
+        plt.rcParams["figure.figsize"] = [20, 10]
+        cm = ConfusionMatrixDisplay.from_predictions(
+            y_true,
+            y_pred,
+            normalize="true",
+            xticks_rotation=90,
+        )
+        cm.figure_.savefig(output_dir + "/confusion_matrix.png", bbox_inches="tight")
 
 
-def save_iou_metrics(detections, dataset_labels, mappings, labels, output_dir):
+def save_iou_metrics(detections, dataset_labels, mappings, labels, output_dir, compare_classes):
     iou_acc = dict()
 
     for img_name in dataset_labels.keys():
@@ -155,8 +170,8 @@ def save_iou_metrics(detections, dataset_labels, mappings, labels, output_dir):
                 )
             )[0]
 
-            if detected_shape["label"] == dataset_shape["label"]:
-                label = detected_shape["label"]
+            if (not compare_classes) or detected_shape["label"] == dataset_shape["label"]:
+                label = dataset_shape["label"]
                 det_shape_polygon = Polygon(detected_shape["points"])
                 dataset_shape_polygon = Polygon(dataset_shape["points"])
                 mappings_per_label[label] += 1
@@ -211,7 +226,7 @@ def get_tree_items(tree):
                 item["type"] = "leaf"
     return items
 
-def save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir):
+def save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir, compare_classes):
     dataset_soms_items = dict()
     detected_soms_items = dict()
 
@@ -278,14 +293,14 @@ def save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir):
                         )[0]
 
                         if mapped_shape in mapped_node["children"]:
-                            if mapped_shape["label"] == child["label"]:
+                            if (not compare_classes) or mapped_shape["label"] == child["label"]:
                                 recall[img_name][shape["id"]] += 1
                                 precision[img_name][shape["id"]] += 1
                             else:
                                 false_det[img_name]["class"] += 1
 
                         else:
-                            if mapped_shape["label"] == child["label"]:
+                            if (not compare_classes) or mapped_shape["label"] == child["label"]:
                                 missed_children[img_name] += 1
 
                 # Normalize recall and precision and add weights
@@ -299,7 +314,7 @@ def save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir):
 
             # Calculate the rest of metrics in the same way
             if np.sum(mapping_matrix[:, shape["id"]]) > 0:
-                if mapped_node["label"] == shape["label"]:
+                if (not compare_classes) or mapped_node["label"] == shape["label"]:
                     if mapped_node["depth"] == shape["depth"]:
                         depth_acc[img_name] += 1
 

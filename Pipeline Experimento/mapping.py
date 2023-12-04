@@ -16,7 +16,7 @@ def detect_duplicates(detected_shapes):
             detected_polygon2 = Polygon(shape2["points"])
             intersection = detected_polygon1.intersection(detected_polygon2).area
             union = detected_polygon1.union(detected_polygon2).area
-            if intersection / union >= 0.5:
+            if union > 0 and intersection / union >= 0.5:
                 duplicates.append((detected_polygon1, detected_polygon2))
 
     return duplicates

@@ -1,10 +1,12 @@
 import json
 import os
 
-import cv2
 import numpy as np
-import utils
+import torch
+from sahi import AutoDetectionModel
+from sahi.predict import get_sliced_prediction
 from shapely.geometry import Polygon
+from ultralytics import YOLO
 
 
 def load_dataset(dataset_path):
@@ -114,3 +116,44 @@ def json_inference_to_labelme(anns, type="bbox", id_start=0):
             shape["id"] = i + id_start
 
     return res
+
+def yolo_prediction(model_path, image_pil, type, id_start):
+    model = YOLO(model_path)
+
+    result = json.loads(model(image_pil, conf=0.4)[0].tojson())
+    shapes = json_inference_to_labelme(
+        result, type=type, id_start=id_start
+    )
+
+    # Unload model from memory
+    del model
+    torch.cuda.empty_cache()
+
+    return shapes
+
+def sahi_predictions(model_path, image_pil, slice_width, slice_height, overlap, type, id_start):
+    detection_model = AutoDetectionModel.from_pretrained(
+        model_type="yolov8",
+        model_path=model_path,
+        confidence_threshold=0.4,
+    )
+
+    result = get_sliced_prediction(
+        image_pil,
+        detection_model,
+        slice_height=slice_height,
+        slice_width=slice_width,
+        overlap_height_ratio=overlap,
+        overlap_width_ratio=overlap,
+        perform_standard_pred=True,
+    )
+    anns = result.to_coco_annotations()
+    shapes = coco_to_labelme(
+        anns, type=type, id_start=id_start
+    )
+
+    # Unload model from memory
+    del detection_model
+    torch.cuda.empty_cache() 
+
+    return shapes

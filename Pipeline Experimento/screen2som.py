@@ -1,17 +1,14 @@
 import json
+
 import cv2
 
-import torch
-from sahi import AutoDetectionModel
-from sahi.predict import get_sliced_prediction
-from ultralytics import YOLO
 from utils import *
 
-ELEMENTS_MODEL = "../Models/trained/Yolov8n-seg - Elements/best.pt"
-TEXT_MODEL = "../Models/trained/Yolov8s - Text/best.pt"
-CONTAINER_MODEL = "../Models/trained/CustomSAM - Container/best.pt"
-APPLEVEL_MODEL = "../Models/trained/Yolov8s-seg - AppLevel/best.pt"
-TOP_MODEL = "../Models/trained/Yolov8s-seg - Top/best.pt"
+ELEMENTS_MODEL = "Models/trained/Yolov8n-seg - Elements/best.pt"
+TEXT_MODEL = "Models/trained/Yolov8s - Text/best.pt"
+CONTAINER_MODEL = "Models/trained/CustomSAM - Container/best.pt"
+APPLEVEL_MODEL = "Models/trained/Yolov8s-seg - AppLevel/best.pt"
+TOP_MODEL = "Models/trained/Yolov8s-seg - Top/best.pt"
 
 def predict(directory, output_dir):
 
@@ -58,44 +55,3 @@ def predict(directory, output_dir):
     
     return detections
 
-   
-def yolo_prediction(model_path, image_pil, type, id_start):
-    model = YOLO(model_path)
-
-    result = json.loads(model(image_pil, conf=0.4)[0].tojson())
-    shapes = json_inference_to_labelme(
-        result, type=type, id_start=id_start
-    )
-
-    # Unload model from memory
-    del model
-    torch.cuda.empty_cache()
-
-    return shapes
-
-def sahi_predictions(model_path, image_pil, slice_width, slice_height, overlap, type, id_start):
-    detection_model = AutoDetectionModel.from_pretrained(
-        model_type="yolov8",
-        model_path=model_path,
-        confidence_threshold=0.4,
-    )
-
-    result = get_sliced_prediction(
-        image_pil,
-        detection_model,
-        slice_height=slice_height,
-        slice_width=slice_width,
-        overlap_height_ratio=overlap,
-        overlap_width_ratio=overlap,
-        perform_standard_pred=True,
-    )
-    anns = result.to_coco_annotations()
-    shapes = coco_to_labelme(
-        anns, type=type, id_start=id_start
-    )
-
-    # Unload model from memory
-    del detection_model
-    torch.cuda.empty_cache() 
-
-    return shapes
