@@ -58,7 +58,7 @@ def ensure_toplevel(tree:dict, bring_up=None):
     for child in children:
         if child["type"] == "node":
             child["children"], bring_up = ensure_toplevel(child, bring_up=bring_up)
-            if len(child["childe"]) == 0:
+            if len(child["children"]) == 0:
                 child["type"] = "leaf"
             if child["label"] in ["Application", "Taskbar", "Dock"]:
                 bring_up.append(child)
