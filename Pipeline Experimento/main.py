@@ -4,6 +4,7 @@ from tkinter import image_names
 import screen2som
 import yolo
 import mobileSAM
+import uied
 import metrics
 import os
 
@@ -36,7 +37,11 @@ def image_experiment(directory):
         mobilesam_detections, directory, "mobileSAM", output_dir, compare_classes=False
     )
 
-    # TODO: Run UIED detections
+    # Run UIED detections
+    uied_detections = uied.batch_component_detection(directory, output_dir)
+    metrics.run_image(
+        uied_detections, directory, "UIED", output_dir, compare_classes=False
+    )
 
     # TODO: Run rpa-us detections
 

@@ -110,20 +110,25 @@ def save_class_metrics(
             else 0
             for label in label_precision
         }
+        label_recall = {
+            label: label_recall[label] / label_count[label] for label in label_recall
+        }
     else:
         detected_shapes = 0
         mapped_shapes = 0
+        dataset_shapes = 0
         for img_name in dataset_labels.keys():
             detected_shapes += len(detections[img_name]["shapes"])
             mapped_shapes += np.sum(mappings[img_name]["mapping_matrix"] > 0)
+            dataset_shapes += len(dataset_labels[img_name]["shapes"])
 
         label_precision = {
             "all": mapped_shapes / detected_shapes,
         }
+        label_recall = {
+            "all": mapped_shapes / dataset_shapes,
+        }
 
-    label_recall = {
-        label: label_recall[label] / label_count[label] for label in label_recall
-    }
 
     # Save class count
     plt.figure(figsize=(10, 5))
@@ -221,13 +226,16 @@ def save_iou_metrics(
 
     # Average IOU accuracy
     iou_acc_avg = dict()
-    for label in labels:
-        # We map the iuo accuracy dict to a list of values corresponding to the label, the filter by removing the 0 values, then we averagae
-        values = list(map(lambda x: x[label], iou_acc.values()))
-        if len(values) == 0:
-            iou_acc_avg[label] = 0.0
-        else:
-            iou_acc_avg[label] = np.average(list(filter(lambda x: x > 0, values)))
+    # We map the iuo accuracy dict to a list of values corresponding to the label, the filter by removing the 0 values, then we averagae
+    values = list(map(lambda x: x[label], iou_acc.values()))
+    if compare_classes:
+        for label in labels:
+            if len(values) == 0:
+                iou_acc_avg[label] = 0.0
+            else:
+                iou_acc_avg[label] = np.average(list(filter(lambda x: x > 0, values)))
+    else:
+        iou_acc_avg["all"] = np.average(list(filter(lambda x: x > 0, values)))
 
     # Save IOU accuracy
     plt.figure(figsize=(10, 5))

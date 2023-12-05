@@ -43,7 +43,10 @@ def coco_to_labelme(coco_anns, type="bbox", id_start=0):
                 [x, y + h],
             ]
 
-            if Polygon(points).is_valid == False:
+            try:
+                if Polygon(points).is_valid == False:
+                    continue
+            except:
                 continue
 
             res.append(
@@ -56,7 +59,10 @@ def coco_to_labelme(coco_anns, type="bbox", id_start=0):
         elif type == "seg":
             points = np.array(ann["segmentation"][0]).reshape(-1, 2)
 
-            if Polygon(points).is_valid == False:
+            try:
+                if Polygon(points).is_valid == False:
+                    continue
+            except:
                 continue
 
             res.append(
@@ -87,7 +93,10 @@ def json_inference_to_labelme(anns, type="bbox", id_start=0):
                 [box["x1"], box["y2"]],
             ]
 
-            if Polygon(points).is_valid == False:
+            try:
+                if Polygon(points).is_valid == False:
+                    continue
+            except:
                 continue
 
             res.append(
@@ -124,8 +133,34 @@ def json_inference_to_labelme(anns, type="bbox", id_start=0):
 
 
 def uied_to_labelme(compos):
-    a = 1
-    return a
+    res = []
+
+    for compo in compos:
+        (x1, y1, x2, y2) = compo.put_bbox()
+        points = [
+                [x1, y1],
+                [x2, y1],
+                [x2, y2],
+                [x1, y2],
+        ]
+
+        try:
+            if Polygon(points).is_valid == False:
+                continue
+        except:
+            continue
+
+        res.append(
+            {
+                "label": compo.category,
+                "points": points,
+            }
+        )
+
+    for i, shape in enumerate(res):
+        shape["id"] = i
+
+    return res
 
 
 def yolo_prediction(model_path, image_pil, type, id_start):
