@@ -22,7 +22,9 @@ def run_image(detections, directory, technique, output_dir, compare_classes=True
     for file, som in tqdm(predicted_soms.items()):
         if os.path.exists(output_dir + f"/{technique}/soms/som_{file}_detected.json"):
             os.remove(output_dir + f"/{technique}/soms/som_{file}_detected.json")
-        json.dump(som, open(output_dir + f"/{technique}/soms/som_{file}_detected.json", "w"))
+        json.dump(
+            som, open(output_dir + f"/{technique}/soms/som_{file}_detected.json", "w")
+        )
 
     mappings = get_all_mapping_data(detections, dataset_labels)
 
@@ -33,20 +35,40 @@ def run_image(detections, directory, technique, output_dir, compare_classes=True
             labels.add(shape["label"])
     labels = list(labels)
 
-    save_class_metrics(detections, dataset_labels, mappings, labels, output_dir + f"/{technique}", compare_classes)
-    save_iou_metrics(detections, dataset_labels, mappings, labels, output_dir + f"/{technique}", compare_classes)
-    save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir + f"/{technique}", compare_classes)
+    save_class_metrics(
+        detections,
+        dataset_labels,
+        mappings,
+        labels,
+        output_dir + f"/{technique}",
+        compare_classes,
+    )
+    save_iou_metrics(
+        detections,
+        dataset_labels,
+        mappings,
+        labels,
+        output_dir + f"/{technique}",
+        compare_classes,
+    )
+    save_som_metrics(
+        predicted_soms,
+        dataset_soms,
+        mappings,
+        output_dir + f"/{technique}",
+        compare_classes,
+    )
 
 
-
-def save_class_metrics(detections, dataset_labels, mappings, labels, output_dir, compare_classes):
+def save_class_metrics(
+    detections, dataset_labels, mappings, labels, output_dir, compare_classes
+):
     # Claculate precision, recall and confusion matrix
     label_count = {label: 0 for label in labels}
     label_precision = {label: 0 for label in labels}
     label_recall = {label: 0 for label in labels}
     num_det_shapes = {label: 0 for label in labels}
 
-    
     if compare_classes:
         # y_pred and y_true for confusion matrix
         y_pred = []
@@ -145,7 +167,9 @@ def save_class_metrics(detections, dataset_labels, mappings, labels, output_dir,
         cm.figure_.savefig(output_dir + "/confusion_matrix.png", bbox_inches="tight")
 
 
-def save_iou_metrics(detections, dataset_labels, mappings, labels, output_dir, compare_classes):
+def save_iou_metrics(
+    detections, dataset_labels, mappings, labels, output_dir, compare_classes
+):
     iou_acc = dict()
 
     for img_name in dataset_labels.keys():
@@ -161,16 +185,21 @@ def save_iou_metrics(detections, dataset_labels, mappings, labels, output_dir, c
 
         for pair in mapped_pairs:
             detected_shape = list(
-                filter(lambda shape: shape["id"] == pair[0], detections[img_name]["shapes"])
+                filter(
+                    lambda shape: shape["id"] == pair[0], detections[img_name]["shapes"]
+                )
             )[0]
 
             dataset_shape = list(
                 filter(
-                    lambda shape: shape["id"] == pair[1], dataset_labels[img_name]["shapes"]
+                    lambda shape: shape["id"] == pair[1],
+                    dataset_labels[img_name]["shapes"],
                 )
             )[0]
 
-            if (not compare_classes) or detected_shape["label"] == dataset_shape["label"]:
+            if (not compare_classes) or detected_shape["label"] == dataset_shape[
+                "label"
+            ]:
                 label = dataset_shape["label"]
                 det_shape_polygon = Polygon(detected_shape["points"])
                 dataset_shape_polygon = Polygon(dataset_shape["points"])
@@ -198,11 +227,8 @@ def save_iou_metrics(detections, dataset_labels, mappings, labels, output_dir, c
         if len(values) == 0:
             iou_acc_avg[label] = 0.0
         else:
-            iou_acc_avg[label] = np.average(
-                list(filter(lambda x: x > 0, values))
-            )
+            iou_acc_avg[label] = np.average(list(filter(lambda x: x > 0, values)))
 
-    
     # Save IOU accuracy
     plt.figure(figsize=(10, 5))
     plt.bar(iou_acc_avg.keys(), iou_acc_avg.values())
@@ -212,6 +238,7 @@ def save_iou_metrics(detections, dataset_labels, mappings, labels, output_dir, c
     plt.xlabel("Class")
     plt.ylabel("IOU accuracy")
     plt.savefig(output_dir + "/iou_accuracy.png", bbox_inches="tight")
+
 
 def get_tree_items(tree):
     items = []
@@ -226,13 +253,20 @@ def get_tree_items(tree):
                 item["type"] = "leaf"
     return items
 
-def save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir, compare_classes):
+
+def save_som_metrics(
+    predicted_soms, dataset_soms, mappings, output_dir, compare_classes
+):
     dataset_soms_items = dict()
     detected_soms_items = dict()
 
     for img_name in dataset_soms.keys():
-        dataset_soms_items[img_name] = get_tree_items(dataset_soms[img_name]["children"])
-        detected_soms_items[img_name] = get_tree_items(predicted_soms[img_name]["children"])
+        dataset_soms_items[img_name] = get_tree_items(
+            dataset_soms[img_name]["children"]
+        )
+        detected_soms_items[img_name] = get_tree_items(
+            predicted_soms[img_name]["children"]
+        )
 
     SOM_detection_metrics = {
         "depth_acc": 0.0,
@@ -276,9 +310,9 @@ def save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir, compare
 
         for shape in dataset_items:
             mapped_node_id = np.argmax(mapping_matrix[:, shape["id"]])
-            mapped_node = list(filter(lambda n: n["id"] == mapped_node_id, detected_items))[
-                0
-            ]
+            mapped_node = list(
+                filter(lambda n: n["id"] == mapped_node_id, detected_items)
+            )[0]
 
             # Calculate recall and precision in a per-node basis
             if shape["type"] == "root" or shape["type"] == "node":
@@ -293,14 +327,18 @@ def save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir, compare
                         )[0]
 
                         if mapped_shape in mapped_node["children"]:
-                            if (not compare_classes) or mapped_shape["label"] == child["label"]:
+                            if (not compare_classes) or mapped_shape["label"] == child[
+                                "label"
+                            ]:
                                 recall[img_name][shape["id"]] += 1
                                 precision[img_name][shape["id"]] += 1
                             else:
                                 false_det[img_name]["class"] += 1
 
                         else:
-                            if (not compare_classes) or mapped_shape["label"] == child["label"]:
+                            if (not compare_classes) or mapped_shape["label"] == child[
+                                "label"
+                            ]:
                                 missed_children[img_name] += 1
 
                 # Normalize recall and precision and add weights
@@ -348,7 +386,9 @@ def save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir, compare
     SOM_detection_metrics["depth_acc"] = np.average(list(depth_acc.values()))
     SOM_detection_metrics["precision"] = np.average(list(precision.values()))
     SOM_detection_metrics["recall"] = np.average(list(recall.values()))
-    SOM_detection_metrics["missed_children"] = np.average(list(missed_children.values()))
+    SOM_detection_metrics["missed_children"] = np.average(
+        list(missed_children.values())
+    )
     SOM_detection_metrics["detection_acc"] = np.average(list(detection_acc.values()))
     SOM_detection_metrics["false_det"]["total"] = np.average(
         [false_det[img_name]["total"] for img_name in false_det.keys()]
@@ -376,7 +416,7 @@ def save_som_metrics(predicted_soms, dataset_soms, mappings, output_dir, compare
     plt.xlabel("Metric")
     plt.ylabel("Value")
     plt.savefig(output_dir + "/som_metrics.png", bbox_inches="tight")
-    
+
     # False detections
     plt.figure(figsize=(10, 5))
     plt.bar(

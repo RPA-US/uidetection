@@ -17,7 +17,9 @@ def load_dataset(dataset_path):
             labeled_json = json.load(open(f"{dataset_path}/{f}"))
 
             # Order the shapes by area (from largest to smallest) for readability
-            labeled_json["shapes"].sort(key=lambda x: Polygon(x["points"]).area, reverse=True)
+            labeled_json["shapes"].sort(
+                key=lambda x: Polygon(x["points"]).area, reverse=True
+            )
 
             # We add these ids to track the elements troughout all the metrics
             for i, shape in enumerate(labeled_json["shapes"]):
@@ -68,9 +70,8 @@ def coco_to_labelme(coco_anns, type="bbox", id_start=0):
 
         for i, shape in enumerate(res):
             shape["id"] = i + id_start
-    
-    return res
 
+    return res
 
 
 def json_inference_to_labelme(anns, type="bbox", id_start=0):
@@ -115,19 +116,23 @@ def json_inference_to_labelme(anns, type="bbox", id_start=0):
             )
         else:
             raise ValueError("Invalid type. Valid types are 'bbox' and 'seg'")
-        
+
         for i, shape in enumerate(res):
             shape["id"] = i + id_start
 
     return res
 
+
+def uied_to_labelme(compos):
+    a = 1
+    return a
+
+
 def yolo_prediction(model_path, image_pil, type, id_start):
     model = YOLO(model_path)
 
     result = json.loads(model(image_pil, conf=0.4)[0].tojson())
-    shapes = json_inference_to_labelme(
-        result, type=type, id_start=id_start
-    )
+    shapes = json_inference_to_labelme(result, type=type, id_start=id_start)
 
     # Unload model from memory
     del model
@@ -135,7 +140,10 @@ def yolo_prediction(model_path, image_pil, type, id_start):
 
     return shapes
 
-def sahi_predictions(model_path, image_pil, slice_width, slice_height, overlap, type, id_start):
+
+def sahi_predictions(
+    model_path, image_pil, slice_width, slice_height, overlap, type, id_start
+):
     detection_model = AutoDetectionModel.from_pretrained(
         model_type="yolov8",
         model_path=model_path,
@@ -152,13 +160,11 @@ def sahi_predictions(model_path, image_pil, slice_width, slice_height, overlap, 
         perform_standard_pred=True,
     )
     anns = result.to_coco_annotations()
-    shapes = coco_to_labelme(
-        anns, type=type, id_start=id_start
-    )
+    shapes = coco_to_labelme(anns, type=type, id_start=id_start)
 
     # Unload model from memory
     del detection_model
-    torch.cuda.empty_cache() 
+    torch.cuda.empty_cache()
 
     return shapes
 

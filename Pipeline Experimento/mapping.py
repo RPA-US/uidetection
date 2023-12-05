@@ -207,7 +207,9 @@ def get_all_mapping_data(predicted_soms, dataset_soms):
         )
         mapping_matrix = calculate_mapping_matrix(similarity_matrix)
         duplicates = detect_duplicates(detected_json["shapes"])
-        orphan_detection = get_orphaned_detections(mapping_matrix, detected_json["shapes"])
+        orphan_detection = get_orphaned_detections(
+            mapping_matrix, detected_json["shapes"]
+        )
         orphan_labels = get_orphaned_labels(mapping_matrix, labeled_json["shapes"])
 
         res[img_name] = {
@@ -217,5 +219,5 @@ def get_all_mapping_data(predicted_soms, dataset_soms):
             "orphan_detection": orphan_detection,
             "orphan_labels": orphan_labels,
         }
-    
+
     return res

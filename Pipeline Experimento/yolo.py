@@ -4,8 +4,8 @@ import cv2
 
 from utils import *
 
-def predict(directory, output_dir):
 
+def predict(directory, output_dir):
     images = dict()
     for file in os.listdir(directory):
         if file.endswith(".png") or file.endswith(".jpg"):
@@ -29,6 +29,9 @@ def predict(directory, output_dir):
         detections[img_name]["imageHeight"] = image_pil.shape[0]
 
         # Save detections
-        json.dump(detections[img_name], open(output_dir + f"/yolo/detections/detections_{img_name}.json", "w"))
-    
+        json.dump(
+            detections[img_name],
+            open(output_dir + f"/yolo/detections/detections_{img_name}.json", "w"),
+        )
+
     return detections

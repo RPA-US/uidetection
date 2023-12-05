@@ -8,6 +8,7 @@ from shapely.geometry import Polygon
 
 import copy
 
+
 def build_tree(tree: list, depth=1):
     """
     Recursively constructs a tree hierarchy from a list of shapes.
@@ -42,7 +43,8 @@ def build_tree(tree: list, depth=1):
             shape1["children"] = build_tree(shape1["children"], depth=depth + 1)
     return list(filter(lambda s: s["depth"] == depth, tree))
 
-def ensure_toplevel(tree:dict, bring_up=None):
+
+def ensure_toplevel(tree: dict, bring_up=None):
     """
     Ensures that the TopLevel labels are in the top level of the tree
 
@@ -62,7 +64,7 @@ def ensure_toplevel(tree:dict, bring_up=None):
                 child["type"] = "leaf"
             if child["label"] in ["Application", "Taskbar", "Dock"]:
                 bring_up.append(child)
-            
+
     new_children = list(filter(lambda c: c not in bring_up, children))
 
     if tree["type"] == "root":
@@ -71,12 +73,14 @@ def ensure_toplevel(tree:dict, bring_up=None):
 
     return new_children, bring_up
 
+
 def readjust_depth(nodes, depth):
     for node in nodes:
         node["depth"] = depth
-        node["children"] = readjust_depth(node["children"], depth+1)
+        node["children"] = readjust_depth(node["children"], depth + 1)
 
     return nodes
+
 
 def labels_to_soms(labels):
     """
@@ -116,5 +120,5 @@ def labels_to_soms(labels):
         except ZeroDivisionError:
             print(labeled_json["imagePath"])
             continue
-    
+
     return dataset_soms

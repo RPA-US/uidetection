@@ -5,8 +5,8 @@ from ultralytics import SAM
 
 from utils import *
 
-def predict(directory, output_dir):
 
+def predict(directory, output_dir):
     images = dict()
     for file in os.listdir(directory):
         if file.endswith(".png") or file.endswith(".jpg"):
@@ -29,17 +29,19 @@ def predict(directory, output_dir):
         detections[img_name]["imageHeight"] = image_pil.shape[0]
 
         # Save detections
-        json.dump(detections[img_name], open(output_dir + f"/mobileSAM/detections/detections_{img_name}.json", "w"))
+        json.dump(
+            detections[img_name],
+            open(output_dir + f"/mobileSAM/detections/detections_{img_name}.json", "w"),
+        )
 
     return detections
+
 
 def sam_prediction(model_path, image_pil, type="bbox", id_start=0):
     model = SAM(model_path)
 
     result = json.loads(model(image_pil, conf=0.4)[0].tojson())
-    shapes = json_inference_to_labelme(
-        result, type=type, id_start=id_start
-    )
+    shapes = json_inference_to_labelme(result, type=type, id_start=id_start)
 
     # Unload model from memory
     del model
