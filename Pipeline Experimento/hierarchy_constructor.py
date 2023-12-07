@@ -1,13 +1,4 @@
-import json
-
-from tqdm import tqdm
-
-import mapping
-import utils
 from shapely.geometry import Polygon
-
-import copy
-
 
 def build_tree(tree: list, depth=1):
     """
@@ -93,7 +84,7 @@ def labels_to_soms(labels):
         dict: Pairs of image name and SOM.
     """
     dataset_soms = dict()
-    for file, labeled_json in tqdm(labels.items()):
+    for file, labeled_json in labels.items():
         shapes = labeled_json["shapes"]
         for shape in shapes:
             shape["depth"] = 1

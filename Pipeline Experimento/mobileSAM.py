@@ -2,6 +2,7 @@ import json
 
 import cv2
 from ultralytics import SAM
+from tqdm import tqdm
 
 from utils import *
 
@@ -19,7 +20,7 @@ def predict(directory, output_dir):
     if not os.path.exists(output_dir + "/mobileSAM/detections"):
         os.makedirs(output_dir + "/mobileSAM/detections")
 
-    for img_name, img_path in images.items():
+    for img_name, img_path in tqdm(images.items(), desc="Running MobileSAM predictions"):
         detections[img_name] = dict()
         image_pil = cv2.imread(img_path)
 
@@ -40,7 +41,7 @@ def predict(directory, output_dir):
 def sam_prediction(model_path, image_pil, type="bbox", id_start=0):
     model = SAM(model_path)
 
-    result = json.loads(model(image_pil, conf=0.4)[0].tojson())
+    result = json.loads(model(image_pil, conf=0.4, verbose=False)[0].tojson())
     shapes = json_inference_to_labelme(result, type=type, id_start=id_start)
 
     # Unload model from memory

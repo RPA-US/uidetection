@@ -1,6 +1,7 @@
 import json
 
 import cv2
+from tqdm import tqdm
 
 from utils import *
 
@@ -18,7 +19,7 @@ def predict(directory, output_dir):
     if not os.path.exists(output_dir + "/yolo/detections"):
         os.makedirs(output_dir + "/yolo/detections")
 
-    for img_name, img_path in images.items():
+    for img_name, img_path in tqdm(images.items(), desc="Running YOLO predictions"):
         detections[img_name] = dict()
         image_pil = cv2.imread(img_path)
 

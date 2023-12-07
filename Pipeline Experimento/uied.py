@@ -3,6 +3,7 @@ import cv2
 import os
 import numpy as np
 import uied_utils.lib_ip.ip_region_proposal as ip
+from tqdm import tqdm
 from utils import *
 
 
@@ -82,7 +83,7 @@ def batch_component_detection(
     if not os.path.exists(output_dir + "/UIED/detections"):
         os.makedirs(output_dir + "/UIED/detections")
 
-    for img_name, img_path in images.items():
+    for img_name, img_path in tqdm(images.items(), desc="Running UIED predictions"):
         classifier = None
         compos = ip.compo_detection(
             img_path,

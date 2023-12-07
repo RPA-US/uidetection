@@ -2,8 +2,8 @@ from cProfile import label
 from charset_normalizer import detect
 import cv2
 import numpy as np
-from tqdm import tqdm
 import utils
+from tqdm import tqdm
 from shapely.geometry import Polygon
 
 
@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
 def get_all_mapping_data(predicted_soms, dataset_soms):
     res = dict()
-    for img_name in tqdm(dataset_soms.keys()):
+    for img_name in tqdm(dataset_soms.keys(), desc="Calculating mapping data"):
         detected_json = predicted_soms[img_name]
         labeled_json = dataset_soms[img_name]
         similarity_matrix = calculate_similarity_matrix(

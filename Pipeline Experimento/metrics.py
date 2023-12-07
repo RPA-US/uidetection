@@ -19,7 +19,7 @@ def run_image(detections, directory, technique, output_dir, compare_classes=True
 
     if not os.path.exists(output_dir + f"/{technique}/soms"):
         os.makedirs(output_dir + f"/{technique}/soms")
-    for file, som in tqdm(predicted_soms.items()):
+    for file, som in predicted_soms.items():
         if os.path.exists(output_dir + f"/{technique}/soms/som_{file}_detected.json"):
             os.remove(output_dir + f"/{technique}/soms/som_{file}_detected.json")
         json.dump(
@@ -30,7 +30,7 @@ def run_image(detections, directory, technique, output_dir, compare_classes=True
 
     # Get class labels
     labels = set()
-    for img_name, img in tqdm(dataset_labels.items()):
+    for img_name, img in dataset_labels.items():
         for shape in img["shapes"]:
             labels.add(shape["label"])
     labels = list(labels)
@@ -113,6 +113,11 @@ def save_class_metrics(
         label_recall = {
             label: label_recall[label] / label_count[label] for label in label_recall
         }
+        label_f1_score = {
+            label: (2 * label_precision[label] * label_recall[label])
+            / (label_precision[label] + label_recall[label] + 1e-10)
+            for label in label_recall
+        }
     else:
         detected_shapes = 0
         mapped_shapes = 0
@@ -128,7 +133,10 @@ def save_class_metrics(
         label_recall = {
             "all": mapped_shapes / dataset_shapes,
         }
-
+        label_f1_score = {
+            "all": (2 * label_precision["all"] * label_recall["all"])
+            / (label_precision["all"] + label_recall["all"] + 1e-10),
+        }
 
     # Save class count
     plt.figure(figsize=(10, 5))
@@ -138,6 +146,7 @@ def save_class_metrics(
     plt.xlabel("Class")
     plt.ylabel("Count")
     plt.savefig(output_dir + "/class_count.png", bbox_inches="tight")
+    plt.close()
 
     # Save Precision
     plt.figure(figsize=(10, 5))
@@ -148,10 +157,10 @@ def save_class_metrics(
     plt.xlabel("Class")
     plt.ylabel("Precision")
     plt.savefig(output_dir + "/precision.png", bbox_inches="tight")
+    plt.close()
 
     # Save Recall
     plt.figure(figsize=(10, 5))
-    plt.bar(label_recall.keys(), label_recall.values())
     plt.bar(label_recall.keys(), label_recall.values(), color="#ff7f0e")
     plt.xticks(rotation=90)
     plt.ylim(0, 1)
@@ -159,6 +168,17 @@ def save_class_metrics(
     plt.xlabel("Class")
     plt.ylabel("Recall")
     plt.savefig(output_dir + "/recall.png", bbox_inches="tight")
+
+    # Save F1 Score
+    plt.figure(figsize=(10, 5))
+    plt.bar(label_f1_score.keys(), label_f1_score.values(), color="#2ca02c")
+    plt.xticks(rotation=90)
+    plt.ylim(0, 1)
+    plt.title("F1 Score per label")
+    plt.xlabel("Class")
+    plt.ylabel("F1 Score")
+    plt.savefig(output_dir + "/f1_score.png", bbox_inches="tight")
+    plt.close()
 
     if compare_classes:
         # Save Confusion Matrix
@@ -215,7 +235,7 @@ def save_iou_metrics(
                     / det_shape_polygon.union(dataset_shape_polygon).area
                 )
 
-                if iou_acc[img_name][label] == 0.0:
+                if np.isclose(iou_acc[img_name][label], 0.0, rtol=1e-09, atol=1e-09):
                     iou_acc[img_name][label] = iou
                 else:
                     # Formula from https://math.stackexchange.com/questions/22348/how-to-add-and-subtract-values-from-an-average
@@ -246,6 +266,7 @@ def save_iou_metrics(
     plt.xlabel("Class")
     plt.ylabel("IOU accuracy")
     plt.savefig(output_dir + "/iou_accuracy.png", bbox_inches="tight")
+    plt.close()
 
 
 def get_tree_items(tree):
@@ -280,6 +301,7 @@ def save_som_metrics(
         "depth_acc": 0.0,
         "precision": 0.0,
         "recall": 0.0,
+        "f1_score": 0.0,
         "missed_children": 0.0,
         "detection_acc": 0.0,
         "false_det": {"total": 0, "class": 0.0, "segment": 0.0},
@@ -394,6 +416,9 @@ def save_som_metrics(
     SOM_detection_metrics["depth_acc"] = np.average(list(depth_acc.values()))
     SOM_detection_metrics["precision"] = np.average(list(precision.values()))
     SOM_detection_metrics["recall"] = np.average(list(recall.values()))
+    SOM_detection_metrics["f1_score"] = (
+        2 * SOM_detection_metrics["precision"] * SOM_detection_metrics["recall"]
+    ) / (SOM_detection_metrics["precision"] + SOM_detection_metrics["recall"] + 1e-10)
     SOM_detection_metrics["missed_children"] = np.average(
         list(missed_children.values())
     )
@@ -424,6 +449,7 @@ def save_som_metrics(
     plt.xlabel("Metric")
     plt.ylabel("Value")
     plt.savefig(output_dir + "/som_metrics.png", bbox_inches="tight")
+    plt.close()
 
     # False detections
     plt.figure(figsize=(10, 5))
@@ -437,3 +463,4 @@ def save_som_metrics(
     plt.xlabel("Metric")
     plt.ylabel("Value")
     plt.savefig(output_dir + "/som_false_detections.png", bbox_inches="tight")
+    plt.close()
