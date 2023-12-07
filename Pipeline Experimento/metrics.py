@@ -297,7 +297,7 @@ def save_som_metrics(
             predicted_soms[img_name]["children"]
         )
 
-    SOM_detection_metrics = {
+    som_detection_metrics = {
         "depth_acc": 0.0,
         "precision": 0.0,
         "recall": 0.0,
@@ -413,35 +413,35 @@ def save_som_metrics(
 
         missed_children[img_name] /= len(dataset_items)
     # Calculate averaged metrics
-    SOM_detection_metrics["depth_acc"] = np.average(list(depth_acc.values()))
-    SOM_detection_metrics["precision"] = np.average(list(precision.values()))
-    SOM_detection_metrics["recall"] = np.average(list(recall.values()))
-    SOM_detection_metrics["f1_score"] = (
-        2 * SOM_detection_metrics["precision"] * SOM_detection_metrics["recall"]
-    ) / (SOM_detection_metrics["precision"] + SOM_detection_metrics["recall"] + 1e-10)
-    SOM_detection_metrics["missed_children"] = np.average(
+    som_detection_metrics["depth_acc"] = np.average(list(depth_acc.values()))
+    som_detection_metrics["precision"] = np.average(list(precision.values()))
+    som_detection_metrics["recall"] = np.average(list(recall.values()))
+    som_detection_metrics["f1_score"] = (
+        2 * som_detection_metrics["precision"] * som_detection_metrics["recall"]
+    ) / (som_detection_metrics["precision"] + som_detection_metrics["recall"] + 1e-10)
+    som_detection_metrics["missed_children"] = np.average(
         list(missed_children.values())
     )
-    SOM_detection_metrics["detection_acc"] = np.average(list(detection_acc.values()))
-    SOM_detection_metrics["false_det"]["total"] = np.average(
+    som_detection_metrics["detection_acc"] = np.average(list(detection_acc.values()))
+    som_detection_metrics["false_det"]["total"] = np.average(
         [false_det[img_name]["total"] for img_name in false_det.keys()]
     )
-    SOM_detection_metrics["false_det"]["class"] = np.average(
+    som_detection_metrics["false_det"]["class"] = np.average(
         [false_det[img_name]["class"] for img_name in false_det.keys()]
     )
-    SOM_detection_metrics["false_det"]["segment"] = np.average(
+    som_detection_metrics["false_det"]["segment"] = np.average(
         [false_det[img_name]["segment"] for img_name in false_det.keys()]
     )
 
     # General metrics
-    SOM_detection_metrics_no_false_det = copy.deepcopy(SOM_detection_metrics)
-    del SOM_detection_metrics_no_false_det["false_det"]
+    som_detection_metrics_no_false_det = copy.deepcopy(som_detection_metrics)
+    del som_detection_metrics_no_false_det["false_det"]
 
     # Save SOM metrics
     plt.figure(figsize=(10, 5))
     plt.bar(
-        SOM_detection_metrics_no_false_det.keys(),
-        SOM_detection_metrics_no_false_det.values(),
+        som_detection_metrics_no_false_det.keys(),
+        som_detection_metrics_no_false_det.values(),
     )
     plt.xticks(rotation=45)
     plt.ylim(0, 1)
@@ -454,8 +454,8 @@ def save_som_metrics(
     # False detections
     plt.figure(figsize=(10, 5))
     plt.bar(
-        SOM_detection_metrics["false_det"].keys(),
-        SOM_detection_metrics["false_det"].values(),
+        som_detection_metrics["false_det"].keys(),
+        som_detection_metrics["false_det"].values(),
     )
     plt.xticks(rotation=45)
     plt.ylim(0, 1)

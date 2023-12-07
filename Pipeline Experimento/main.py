@@ -16,23 +16,23 @@ def image_experiment(directory):
         os.makedirs(output_dir)
 
     # Run screen2som
-    # log.info("Running screen2som")
-    # screen2som_detections = screen2som.predict(directory, output_dir)
-    # metrics.run_image(screen2som_detections, directory, "screen2som", output_dir)
-    # metrics.run_image(
-    #     screen2som_detections,
-    #     directory,
-    #     "screen2som-no-compare-classes",
-    #     output_dir,
-    #     compare_classes=False,
-    # )
+    log.info("Running screen2som")
+    screen2som_detections = screen2som.predict(directory, output_dir)
+    metrics.run_image(screen2som_detections, directory, "screen2som", output_dir)
+    metrics.run_image(
+        screen2som_detections,
+        directory,
+        "screen2som-no-compare-classes",
+        output_dir,
+        compare_classes=False,
+    )
 
-    # # Run YOLO detections
-    # log.info("Running YOLO")
-    # yolo_detections = yolo.predict(directory, output_dir)
-    # metrics.run_image(
-    #     yolo_detections, directory, "yolo", output_dir, compare_classes=False
-    # )
+    # Run YOLO detections
+    log.info("Running YOLO")
+    yolo_detections = yolo.predict(directory, output_dir)
+    metrics.run_image(
+        yolo_detections, directory, "yolo", output_dir, compare_classes=False
+    )
 
     # Run MobileSAM detections
     log.info("Running MobileSAM")
