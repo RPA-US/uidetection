@@ -80,7 +80,7 @@ def coco_to_labelme(coco_anns, type="bbox", id_start=0):
     return res
 
 
-def json_inference_to_labelme(anns, type="bbox", id_start=0):
+def json_inference_to_labelme(anns, type="bbox", id_start=0, remove_holes=False):
     res = []
     for i, ann in enumerate(anns):
         if type == "bbox":
@@ -95,6 +95,8 @@ def json_inference_to_labelme(anns, type="bbox", id_start=0):
 
             try:
                 if Polygon(points).is_valid == False:
+                    if remove_holes:
+                        points = Polygon(points).buffer(0).exterior.coords[:-1]
                     continue
             except:
                 continue
@@ -113,6 +115,8 @@ def json_inference_to_labelme(anns, type="bbox", id_start=0):
 
             try:
                 if Polygon(points).is_valid == False:
+                    if remove_holes:
+                        points = Polygon(points).buffer(0).exterior.coords[:-1]
                     continue
             except:
                 continue

@@ -42,7 +42,7 @@ def sam_prediction(model_path, image_pil, type="bbox", id_start=0):
     model = SAM(model_path)
 
     result = json.loads(model(image_pil, conf=0.4, verbose=False)[0].tojson())
-    shapes = json_inference_to_labelme(result, type=type, id_start=id_start)
+    shapes = json_inference_to_labelme(result, type=type, id_start=id_start, remove_holes=True)
 
     # Unload model from memory
     del model
