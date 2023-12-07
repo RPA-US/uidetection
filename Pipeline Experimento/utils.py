@@ -166,7 +166,7 @@ def uied_to_labelme(compos):
 def yolo_prediction(model_path, image_pil, type, id_start):
     model = YOLO(model_path)
 
-    result = json.loads(model(image_pil, conf=0.4)[0].tojson())
+    result = json.loads(model(image_pil, conf=0.4, verbose=False)[0].tojson())
     shapes = json_inference_to_labelme(result, type=type, id_start=id_start)
 
     # Unload model from memory
@@ -193,6 +193,7 @@ def sahi_predictions(
         overlap_height_ratio=overlap,
         overlap_width_ratio=overlap,
         perform_standard_pred=True,
+        verbose=0,
     )
     anns = result.to_coco_annotations()
     shapes = coco_to_labelme(anns, type=type, id_start=id_start)
