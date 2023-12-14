@@ -9,3 +9,5 @@ Models
 */*.pt
 *.png
 *.json
+
+*/data
