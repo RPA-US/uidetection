@@ -15,12 +15,12 @@ def predict(directory, output_dir, cropping_threshold=2):
 
     detections = dict()
 
-    if not os.path.exists(output_dir + "/rpa_us"):
-        os.makedirs(output_dir + "/rpa_us")
-    if not os.path.exists(output_dir + "/rpa_us/detections"):
-        os.makedirs(output_dir + "/rpa_us/detections")
+    if not os.path.exists(output_dir + "/kevin_moran"):
+        os.makedirs(output_dir + "/kevin_moran")
+    if not os.path.exists(output_dir + "/kevin_moran/detections"):
+        os.makedirs(output_dir + "/kevin_moran/detections")
 
-    for img_name, img_path in tqdm(images.items(), desc="Running RPA-US predictions"):
+    for img_name, img_path in tqdm(images.items(), desc="Running kevin-moran predictions"):
         ocr_result = get_ocr_image(img_path)
         texto_detectado_ocr = ocr_result[0]
 
@@ -33,7 +33,7 @@ def predict(directory, output_dir, cropping_threshold=2):
         # Save detections
         json.dump(
             detections[img_name],
-            open(output_dir + f"/rpa_us/detections/detections_{img_name}.json", "w"),
+            open(output_dir + f"/kevin_moran/detections/detections_{img_name}.json", "w"),
         )
 
     return detections

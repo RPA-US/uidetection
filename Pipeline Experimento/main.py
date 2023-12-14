@@ -5,7 +5,7 @@ import screen2som
 import yolo
 import mobileSAM
 import uied
-import rpa_us
+import kevin_moran
 import metrics
 import os
 
@@ -48,11 +48,11 @@ def image_experiment(directory):
         uied_detections, directory, "UIED", output_dir, compare_classes=False
     )
 
-    # Run rpa-us detections
-    log.info("Running rpa-us")
-    rpa_us_detections = rpa_us.predict(directory, output_dir)
+    # Run kevin-moran detections
+    log.info("Running kevin-moran")
+    kevin_moran_detections = kevin_moran.predict(directory, output_dir)
     metrics.run_image(
-        rpa_us_detections, directory, "rpa_us", output_dir, compare_classes=False
+        kevin_moran_detections, directory, "kevin_moran", output_dir, compare_classes=False
     )
 
 
