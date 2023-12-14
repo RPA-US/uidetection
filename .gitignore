@@ -1,0 +1,13 @@
+*Datasets
+Models
+*/Models
+*/runs
+*/__pycache__
+.venv
+.vscode/
+
+*/*.pt
+*.png
+*.json
+
+*/data
