@@ -12,8 +12,8 @@ from sahi.predict import get_sliced_prediction
 from ultralytics import YOLO
 import copy
 
-from .hierarchy_constructor import *
-from .utils import *
+from hierarchy_constructor import *
+from utils import *
 
 ELEMENTS_MODEL = "Models/trained/Yolov8n-seg - Elements/best.pt"
 CONTAINER_MODEL = "Models/trained/CustomSAM - Container/best.pt"
@@ -108,15 +108,15 @@ def sahi_predictions(model_path, image_pil, slice_width, slice_height, overlap, 
 
 
 if __name__ == '__main__':
-    image_path = "images/1.jpg"
+    image_path = "Comparison Experiment/data/image.png"
 
     recortes, detections, som = predict(image_path)
     # save json
-    with open("images/detections.json", "w") as f:
+    with open("Comparison Experiment/data/detections.json", "w") as f:
         json.dump(detections, f, indent=4)
     # save som
-    with open("images/som.json", "w") as f:
+    with open("Comparison Experiment/data/som.json", "w") as f:
         json.dump(som, f, indent=4)
     # save recortes
     for i, recorte in enumerate(recortes):
-        cv2.imwrite(f"images/recorte{i}.jpg", recorte)
+        cv2.imwrite(f"Comparison Experiment/data/recorte{i}.jpg", recorte)
