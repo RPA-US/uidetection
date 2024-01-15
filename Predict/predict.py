@@ -109,9 +109,8 @@ def sahi_predictions(model_path, image_pil, slice_width, slice_height, overlap, 
 
 if __name__ == '__main__':
     image_path = "images/1.jpg"
-    path_to_save_bordered_images = "images/bordered_images"
 
-    recortes, detections, som = predict(image_path, path_to_save_bordered_images)
+    recortes, detections, som = predict(image_path)
     # save json
     with open("images/detections.json", "w") as f:
         json.dump(detections, f, indent=4)
