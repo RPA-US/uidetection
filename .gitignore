@@ -6,7 +6,7 @@ Models
 .venv
 .vscode/
 env
-
+__pycache__
 */*.pt
 *.png
 *.json
