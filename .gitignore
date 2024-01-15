@@ -5,6 +5,7 @@ Models
 */__pycache__
 .venv
 .vscode/
+env
 
 */*.pt
 *.png
