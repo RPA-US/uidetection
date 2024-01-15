@@ -117,6 +117,3 @@ if __name__ == '__main__':
     # save som
     with open("Comparison Experiment/data/som.json", "w") as f:
         json.dump(som, f, indent=4)
-    # save recortes
-    for i, recorte in enumerate(recortes):
-        cv2.imwrite(f"Comparison Experiment/data/recorte{i}.jpg", recorte)
