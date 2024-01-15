@@ -5,13 +5,15 @@ from pyparsing import C
 import torch
 import json
 import cv2
+import os
 from shapely.geometry import Polygon
-
+import sys
+# Sahi imports
 from sahi import AutoDetectionModel
 from sahi.predict import get_sliced_prediction
 from ultralytics import YOLO
 import copy
-
+# Custom imports
 from hierarchy_constructor import *
 from utils import *
 
@@ -106,14 +108,29 @@ def sahi_predictions(model_path, image_pil, slice_width, slice_height, overlap, 
 
     return shapes
 
-
 if __name__ == '__main__':
-    image_path = "Comparison Experiment/data/image.png"
+    
+    root_path = "Comparison Experiment/data/"
+    print("Comenzando prediccion...")
+    
+    # Verifica si se ha pasado un argumento para image_path
+    if len(sys.argv) > 1:
+        image_path = root_path + sys.argv[1]
+    else:
+        print("No se ha proporcionado un path para la imagen. Usando un valor por defecto.")
+        image_path = root_path + "image.png"  # Valor por defecto
 
     recortes, detections, som = predict(image_path)
     # save json
-    with open("Comparison Experiment/data/detections.json", "w") as f:
+    with open(root_path + "detections.json", "w") as f:
         json.dump(detections, f, indent=4)
     # save som
-    with open("Comparison Experiment/data/som.json", "w") as f:
+    with open(root_path + "som.json", "w") as f:
         json.dump(som, f, indent=4)
+        
+
+    if not os.path.exists(root_path + "recortes/"):
+        os.makedirs(root_path + "recortes/")
+
+    
+    save_bordered_images(image_path, detections, root_path + "recortes/")
