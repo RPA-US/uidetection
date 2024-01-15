@@ -25,4 +25,9 @@ Instalaremos lo siguiente (modificar la versión de CUDA si es necesario, en est
 pip3 uninstall torch torchvision torchaudio && pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
 
-Tenemos que tener en cuenta, que será necesario tener el paquete de datos "YOLO_Datasets/" en la misma ruta, para tener datos sobre los que trabajar.
+Tenemos que tener en cuenta, que será necesario tener los siguientes paquetes de datos (carperta ScreenRPA en OD):
+
+- "YOLO_Datasets/" en la misma ruta, para tener datos sobre los que trabajar.
+
+- "ModelsScreen2SOM" en la ruta "Models/", para tener accesibles los modelos que vamos a utilizar en las inferencias.
+
