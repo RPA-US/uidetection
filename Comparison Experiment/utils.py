@@ -167,10 +167,10 @@ def uied_to_labelme(compos):
     return res
 
 
-def yolo_prediction(model_path, image_pil, type, id_start):
+def yolo_prediction(model_path, image_pil, type, id_start, thress):
     model = YOLO(model_path)
 
-    result = json.loads(model(image_pil, conf=0.4, verbose=False)[0].tojson())
+    result = json.loads(model(image_pil, conf=thress, verbose=False)[0].tojson())
     shapes = json_inference_to_labelme(result, type=type, id_start=id_start)
 
     # Unload model from memory
@@ -181,12 +181,12 @@ def yolo_prediction(model_path, image_pil, type, id_start):
 
 
 def sahi_predictions(
-    model_path, image_pil, slice_width, slice_height, overlap, type, id_start
+    model_path, image_pil, slice_width, slice_height, overlap, type, id_start, thress
 ):
     detection_model = AutoDetectionModel.from_pretrained(
         model_type="yolov8",
         model_path=model_path,
-        confidence_threshold=0.4,
+        confidence_threshold=thress,
     )
 
     result = get_sliced_prediction(
