@@ -23,31 +23,47 @@ TEXT_MODEL = "Models/trained/Yolov8s - Text/best.pt"
 APPLEVEL_MODEL = "Models/trained/Yolov8s-seg - AppLevel/best.pt"
 TOP_MODEL = "Models/trained/Yolov8s-seg - Top/best.pt"
 
+CLUSTER_ELEMENTS_MODEL = "Models/cluster/elements-cluster.pt"
+CLUSTER_CONTAINER_MODEL = "Models/cluster/container-cluster.pt"
+CLUSTER_TEXT_MODEL = "Models/cluster/text-cluster.pt"
+CLUSTER_APPLEVEL_MODEL = "Models/cluster/applevel-cluster.pt"
+CLUSTER_TOP_MODEL = "Models/cluster/toplevel-cluster.pt"
+
 def predict(image_path):
     image_pil = cv2.imread(image_path)
 
     detections = dict()
 
     # Elements level preditions
-    elements_shapes = sahi_predictions(ELEMENTS_MODEL, image_pil, 240, 240, 0.3, "bbox", 0)
+    elements_shapes = sahi_predictions(
+                CLUSTER_ELEMENTS_MODEL, image_pil, 240, 240, 0.3, "bbox", 0, 0.4
+    )
     detections["shapes"] = elements_shapes
     detections["imageWidth"] = image_pil.shape[1]
     detections["imageHeight"] = image_pil.shape[0]
 
     # Text level predictions
-    text_shapes = sahi_predictions(TEXT_MODEL, image_pil, 240, 240, 0.3, "bbox", len(detections["shapes"]))
+    text_shapes = sahi_predictions(
+        CLUSTER_TEXT_MODEL, image_pil, 240, 240, 0.3, "bbox", len(detections["shapes"]), 0.2
+    )
     detections["shapes"].extend(text_shapes)
 
     # Container Level predictions
-    container_shapes = yolo_prediction(CONTAINER_MODEL, image_pil, "bbox", len(detections["shapes"]))
+    container_shapes = yolo_prediction(
+        CONTAINER_MODEL, image_pil, "bbox", len(detections["shapes"]), 0.7
+    )
     detections["shapes"].extend(container_shapes)
 
     # Application level predictions
-    applevel_shapes = yolo_prediction(APPLEVEL_MODEL, image_pil, "seg", len(detections["shapes"]))
+    applevel_shapes = yolo_prediction(
+        CLUSTER_APPLEVEL_MODEL, image_pil, "seg", len(detections["shapes"]), 0.3
+    )
     detections["shapes"].extend(applevel_shapes)
 
     # Top level predictions
-    toplevel_shapes = yolo_prediction(TOP_MODEL, image_pil, "seg", len(detections["shapes"]))
+    toplevel_shapes = yolo_prediction(
+        TOP_MODEL, image_pil, "seg", len(detections["shapes"]), 0.4
+    )
     detections["shapes"].extend(toplevel_shapes)
 
     # Order shapes by area
@@ -67,13 +83,11 @@ def predict(image_path):
     return recortes, detections["shapes"], som
 
    
-def yolo_prediction(model_path, image_pil, type, id_start):
+def yolo_prediction(model_path, image_pil, type, id_start, thress):
     model = YOLO(model_path)
 
-    result = json.loads(model(image_pil, conf=0.4)[0].tojson())
-    shapes = json_inference_to_labelme(
-        result, type=type, id_start=id_start
-    )
+    result = json.loads(model(image_pil, conf=thress, verbose=False)[0].tojson())
+    shapes = json_inference_to_labelme(result, type=type, id_start=id_start)
 
     # Unload model from memory
     del model
@@ -81,11 +95,13 @@ def yolo_prediction(model_path, image_pil, type, id_start):
 
     return shapes
 
-def sahi_predictions(model_path, image_pil, slice_width, slice_height, overlap, type, id_start):
+def sahi_predictions(
+    model_path, image_pil, slice_width, slice_height, overlap, type, id_start, thress
+):
     detection_model = AutoDetectionModel.from_pretrained(
         model_type="yolov8",
         model_path=model_path,
-        confidence_threshold=0.4,
+        confidence_threshold=thress,
     )
 
     result = get_sliced_prediction(
@@ -96,15 +112,14 @@ def sahi_predictions(model_path, image_pil, slice_width, slice_height, overlap, 
         overlap_height_ratio=overlap,
         overlap_width_ratio=overlap,
         perform_standard_pred=True,
+        verbose=0,
     )
     anns = result.to_coco_annotations()
-    shapes = coco_to_labelme(
-        anns, type=type, id_start=id_start
-    )
+    shapes = coco_to_labelme(anns, type=type, id_start=id_start)
 
     # Unload model from memory
     del detection_model
-    torch.cuda.empty_cache() 
+    torch.cuda.empty_cache()
 
     return shapes
 

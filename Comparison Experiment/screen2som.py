@@ -76,7 +76,7 @@ def predict(directory, output_dir, optimized=False):
 
         # Container Level predictions
         container_shapes = yolo_prediction(
-            CONTAINER_MODEL, image_pil, "bbox", len(detections[img_name]["shapes"]), 0.55
+            CONTAINER_MODEL, image_pil, "bbox", len(detections[img_name]["shapes"]), 0.7
         )
         detections[img_name]["shapes"].extend(container_shapes)
 
