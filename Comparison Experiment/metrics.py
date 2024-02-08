@@ -1,3 +1,4 @@
+from audioop import avg
 import copy
 import json
 import os
@@ -9,6 +10,7 @@ from mapping import *
 from sklearn.metrics import ConfusionMatrixDisplay
 from utils import *
 
+from zss import simple_distance, Node
 
 def run_image(detections, directory, technique, output_dir, compare_classes=True):
     dataset_labels = load_dataset(directory)
@@ -43,6 +45,7 @@ def run_image(detections, directory, technique, output_dir, compare_classes=True
         output_dir + f"/{technique}",
         compare_classes,
     )
+
     save_iou_metrics(
         detections,
         dataset_labels,
@@ -51,12 +54,20 @@ def run_image(detections, directory, technique, output_dir, compare_classes=True
         output_dir + f"/{technique}",
         compare_classes,
     )
+    
     save_som_metrics(
         predicted_soms,
         dataset_soms,
         mappings,
         output_dir + f"/{technique}",
         compare_classes,
+    )
+
+    calculate_graph_edit_distance(
+        predicted_soms,
+        dataset_soms,
+        mappings,
+        output_dir + f"/{technique}",
     )
 
 
@@ -180,6 +191,12 @@ def save_class_metrics(
     plt.savefig(output_dir + "/f1_score.png", bbox_inches="tight")
     plt.close()
 
+    # Save Precision, Recall and F1 Score in csv
+    with open("/".join(output_dir.split('/')[:-1]) + "/metrics.csv", "a") as f:
+        f.write(
+            f"{output_dir.split('/')[-1]}, {label_precision['all']}, {label_recall['all']}, {label_f1_score['all']},"
+        )
+
     if compare_classes:
         # Save Confusion Matrix
         plt.rcParams["figure.figsize"] = [20, 10]
@@ -267,6 +284,12 @@ def save_iou_metrics(
     plt.ylabel("IOU accuracy")
     plt.savefig(output_dir + "/iou_accuracy.png", bbox_inches="tight")
     plt.close()
+
+    # Save iou in csv
+    with open("/".join(output_dir.split('/')[:-1]) + "/metrics.csv", "a") as f:
+        f.write(
+            f"{iou_acc_avg['all']},"
+        )
 
 
 def get_tree_items(tree):
@@ -464,3 +487,98 @@ def save_som_metrics(
     plt.ylabel("Value")
     plt.savefig(output_dir + "/som_false_detections.png", bbox_inches="tight")
     plt.close()
+
+
+def calculate_graph_edit_distance(predicted_soms, dataset_soms, mappings, output_dir):
+    dataset_graphs, detection_graphs = get_digraphs(
+        predicted_soms, dataset_soms, mappings
+    )
+    
+    graph_edit_distances = dict()
+    for img_name in tqdm(dataset_graphs.keys(), desc="Calculating graph edit distance"):
+        graph_edit_distances[img_name] = simple_distance(
+            dataset_graphs[img_name], detection_graphs[img_name]
+        )
+
+    avg_graph_edit_distance = np.average(list(graph_edit_distances.values()))
+
+    # Save to csv
+    with open("/".join(output_dir.split('/')[:-1]) + "/metrics.csv", "a") as f:
+        f.write(
+            f"{avg_graph_edit_distance}\n"
+        )
+
+
+def get_digraphs(predicted_soms, dataset_soms, mappings):
+    # Create 2 trees for each image, with keys being ids that have to match if they are the same shape
+    dataset_graphs = dict()
+    detection_graphs = dict()
+
+    for img_name in dataset_soms.keys():
+        # These two list contain the shapes and their children
+        dataset_labels = get_tree_items(
+            dataset_soms[img_name]["children"]
+        )
+        detections = get_tree_items(
+            predicted_soms[img_name]["children"]
+        )
+
+        # Starting id for the new DiGraphs
+        current_id = 1
+
+        # Needed to add edges to the graph
+        dataset_id_mapping = dict()
+        detection_id_mapping = dict()
+
+        # Assign ids to shapes from dataset
+        for shape in dataset_labels:
+            detected = np.sum(mappings[img_name]["mapping_matrix"][:, shape["id"]]) > 0
+
+            # Assign the same id to the mapped shape
+            if detected:
+                detected_shape_id = np.argmax(
+                    mappings[img_name]["mapping_matrix"][:, shape["id"]
+                    ]
+                )
+                detected_shape = list(
+                    filter(
+                        lambda x: x["id"] == detected_shape_id,
+                        detections,
+                    )
+                )[0]
+
+                dataset_id_mapping[shape["id"]] = current_id
+                detection_id_mapping[detected_shape["id"]] = current_id
+
+            # Assign id only to dataset shape
+            else:
+                dataset_id_mapping[shape["id"]] = current_id
+
+            current_id += 1
+
+        for shape in detections:
+            if shape["id"] not in detection_id_mapping:
+                detection_id_mapping[shape["id"]] = current_id
+                current_id += 1
+
+        # Create graph for dataset
+        dataset_graphs[img_name] = Node("-1", get_children_nodes_from_id(-1, dataset_id_mapping, dataset_labels))
+
+        # Create graph for detections
+        detection_graphs[img_name] = Node("-1", get_children_nodes_from_id(-1, detection_id_mapping, detections))
+        
+    return dataset_graphs, detection_graphs
+
+def get_children_nodes_from_id(id, id_mapping, labels):
+    children = []
+    if id == -1:
+        current_node = {
+            "id": -1,
+            "type": "root",
+            "children": list(filter(lambda x: x["depth"] == 1, labels))
+        }
+    else:
+        current_node = list(filter(lambda x: x["id"] == id, labels))[0]
+    for child in current_node["children"]:
+        children.append(Node(str(id_mapping[child["id"]]), get_children_nodes_from_id(child["id"], id_mapping, labels)))
+    return children

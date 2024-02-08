@@ -15,10 +15,14 @@ def image_experiment(directory):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    # Create csv to store precision, recall, f1 score and iou accuracy per technique
+    with open(output_dir + "/metrics.csv", "w") as f:
+        f.write("Technique, Avg Precision, Avg Recall, Avg F1 Score, Avg IOU Accuracy, Avg Edit Tree Distance\n")
+
     # Run screen2som
     log.info("Running screen2som")
     screen2som_detections = screen2som.predict(directory, output_dir + "screen2som")
-    metrics.run_image(screen2som_detections, directory, "screen2som", output_dir)
+    # metrics.run_image(screen2som_detections, directory, "screen2som", output_dir)
     metrics.run_image(
         screen2som_detections,
         directory,
@@ -30,7 +34,7 @@ def image_experiment(directory):
     # Run optimized screen2som
     log.info("Running optimized screen2som")
     screen2som_detections = screen2som.predict(directory, output_dir + "screen2som-optimized", optimized=True)
-    metrics.run_image(screen2som_detections, directory, "screen2som-optimized", output_dir)
+    # metrics.run_image(screen2som_detections, directory, "screen2som-optimized", output_dir)
     metrics.run_image(
         screen2som_detections,
         directory,
@@ -57,7 +61,7 @@ def image_experiment(directory):
     log.info("Running UIED")
     uied_detections = uied.batch_component_detection(directory, output_dir)
     metrics.run_image(
-        uied_detections, directory, "UIED", output_dir, compare_classes=False
+      uied_detections, directory, "UIED", output_dir, compare_classes=False
     )
 
     # Run kevin-moran detections
