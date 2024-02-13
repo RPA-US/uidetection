@@ -5,17 +5,17 @@ from tqdm import tqdm
 
 from utils import *
 
-ELEMENTS_MODEL = "Models/trained/Yolov8n-seg - Elements/best.pt"
-TEXT_MODEL = "Models/trained/Yolov8s - Text/best.pt"
-CONTAINER_MODEL = "Models/trained/CustomSAM - Container/best.pt"
-APPLEVEL_MODEL = "Models/trained/Yolov8s-seg - AppLevel/best.pt"
-TOP_MODEL = "Models/trained/Yolov8s-seg - Top/best.pt"
+ELEMENTS_MODEL = "Models/elements.pt"
+TEXT_MODEL = "Models/text.pt"
+CONTAINER_MODEL = "Models/container.pt"
+APPLEVEL_MODEL = "Models/applevel.pt"
+TOP_MODEL = "Models/toplevel.pt"
 
-CLUSTER_ELEMENTS_MODEL = "Models/cluster/elements-cluster.pt"
-CLUSTER_CONTAINER_MODEL = "Models/cluster/container-cluster.pt"
-CLUSTER_TEXT_MODEL = "Models/cluster/text-cluster.pt"
-CLUSTER_APPLEVEL_MODEL = "Models/cluster/applevel-cluster.pt"
-CLUSTER_TOP_MODEL = "Models/cluster/toplevel-cluster.pt"
+CLUSTER_ELEMENTS_MODEL = "Models/elements-cluster.pt"
+CLUSTER_CONTAINER_MODEL = "Models/container-cluster.pt"
+CLUSTER_TEXT_MODEL = "Models/text-cluster.pt"
+CLUSTER_APPLEVEL_MODEL = "Models/applevel-cluster.pt"
+CLUSTER_TOP_MODEL = "Models/toplevel-cluster.pt"
 
 
 def predict(directory, output_dir, optimized=False):
