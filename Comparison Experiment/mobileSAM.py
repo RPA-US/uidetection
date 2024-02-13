@@ -24,7 +24,7 @@ def predict(directory, output_dir):
         detections[img_name] = dict()
         image_pil = cv2.imread(img_path)
 
-        shapes = sam_prediction("Models/base/mobile_sam.pt", image_pil, "seg", 0)
+        shapes = sam_prediction("Models/mobile_sam.pt", image_pil, "seg", 0)
         detections[img_name]["shapes"] = shapes
         detections[img_name]["imageWidth"] = image_pil.shape[1]
         detections[img_name]["imageHeight"] = image_pil.shape[0]
