@@ -1,5 +1,7 @@
 import getopt, sys
 import logging as log
+import time
+from turtle import st
 
 import screen2som
 import yolo
@@ -8,20 +10,29 @@ import uied
 import kevin_moran
 import metrics
 import os
+import time
 
 
 def image_experiment(directory):
-    output_dir = f"runs/{directory.split('.')[0]}"
+    output_dir = "runs/"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     # Create csv to store precision, recall, f1 score and iou accuracy per technique
-    with open(output_dir + "/metrics.csv", "w") as f:
-        f.write("Technique, Avg Precision, Avg Recall, Avg F1 Score, Avg IOU Accuracy, Avg Edit Tree Distance\n")
+    with open(output_dir + "metrics.csv", "w") as f:
+        f.write("Technique, Time, Avg Precision, Avg Recall, Avg F1 Score, Avg IOU Accuracy, Avg Edit Tree Distance\n")
 
     # Run screen2som
     log.info("Running screen2som")
+
+    start_time = time.time()
     screen2som_detections = screen2som.predict(directory, output_dir + "screen2som")
+    end_time = time.time()
+    execution_time = end_time - start_time
+    # Save in csv
+    with open(output_dir + "metrics.csv", "a") as f:
+        f.write(f"screen2som-no-compare-classes, {execution_time}")
+
     # metrics.run_image(screen2som_detections, directory, "screen2som", output_dir)
     metrics.run_image(
         screen2som_detections,
@@ -33,7 +44,15 @@ def image_experiment(directory):
 
     # Run optimized screen2som
     log.info("Running optimized screen2som")
+
+    start_time = time.time()
     screen2som_detections = screen2som.predict(directory, output_dir + "screen2som-optimized", optimized=True)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    # Save in csv
+    with open(output_dir + "/metrics.csv", "a") as f:
+        f.write(f"screen2som-optimized-no-compare-classes, {execution_time}")
+
     # metrics.run_image(screen2som_detections, directory, "screen2som-optimized", output_dir)
     metrics.run_image(
         screen2som_detections,
@@ -45,28 +64,59 @@ def image_experiment(directory):
 
     # Run YOLO detections
     log.info("Running YOLO")
+
+    start_time = time.time()
     yolo_detections = yolo.predict(directory, output_dir)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    # Save in csv
+    with open(output_dir + "metrics.csv", "a") as f:
+        f.write(f"yolo-no-compare-classes, {execution_time}")
     metrics.run_image(
         yolo_detections, directory, "yolo", output_dir, compare_classes=False
     )
 
     # Run MobileSAM detections
     log.info("Running MobileSAM")
+
+    start_time = time.time()
     mobilesam_detections = mobileSAM.predict(directory, output_dir)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    # Save in csv
+    with open(output_dir + "metrics.csv", "a") as f:
+        f.write(f"mobileSAM-no-compare-classes, {execution_time}")
+
     metrics.run_image(
         mobilesam_detections, directory, "mobileSAM", output_dir, compare_classes=False
     )
 
     # Run UIED detections
     log.info("Running UIED")
+
+    start_time = time.time()
     uied_detections = uied.batch_component_detection(directory, output_dir)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    # Save in csv
+    with open(output_dir + "metrics.csv", "a") as f:
+        f.write(f"UIED-no-compare-classes, {execution_time}")
+
     metrics.run_image(
       uied_detections, directory, "UIED", output_dir, compare_classes=False
     )
 
     # Run kevin-moran detections
     log.info("Running kevin-moran")
+
+    start_time = time.time()
     kevin_moran_detections = kevin_moran.predict(directory, output_dir)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    # Save in csv
+    with open(output_dir + "metrics.csv", "a") as f:
+        f.write(f"kevin-moran-no-compare-classes, {execution_time}")
+
     metrics.run_image(
         kevin_moran_detections, directory, "kevin_moran", output_dir, compare_classes=False
     )
