@@ -338,103 +338,104 @@ def save_som_metrics(
     false_det = dict()
 
     for img_name in dataset_soms_items.keys():
-        depth_acc[img_name] = 0.0
-        # Recall and precision are calculated per node and then weighted averaged by the number of children
-        recall[img_name] = dict()
-        precision[img_name] = dict()
+        if len(detected_soms_items[img_name]) != 0:
+            depth_acc[img_name] = 0.0
+            # Recall and precision are calculated per node and then weighted averaged by the number of children
+            recall[img_name] = dict()
+            precision[img_name] = dict()
 
-        # Weights for recall and precision
-        weights = []
+            # Weights for recall and precision
+            weights = []
 
-        missed_children[img_name] = 0.0
-        detection_acc[img_name] = 0.0
-        false_det[img_name] = {"total": 0, "class": 0.0, "segment": 0.0}
+            missed_children[img_name] = 0.0
+            detection_acc[img_name] = 0.0
+            false_det[img_name] = {"total": 0, "class": 0.0, "segment": 0.0}
 
-        mapping_matrix = mappings[img_name]["mapping_matrix"]
-        orphan_detections = mappings[img_name]["orphan_detection"]
-        duplicates = mappings[img_name]["duplicates"]
+            mapping_matrix = mappings[img_name]["mapping_matrix"]
+            orphan_detections = mappings[img_name]["orphan_detection"]
+            duplicates = mappings[img_name]["duplicates"]
 
-        non_duplicate_orphans = list(
-            filter(lambda x: not any(x in d for d in duplicates), orphan_detections)
-        )
+            non_duplicate_orphans = list(
+                filter(lambda x: not any(x in d for d in duplicates), orphan_detections)
+            )
 
-        dataset_items = dataset_soms_items[img_name]
-        detected_items = detected_soms_items[img_name]
+            dataset_items = dataset_soms_items[img_name]
+            detected_items = detected_soms_items[img_name]
 
-        for shape in dataset_items:
-            mapped_node_id = np.argmax(mapping_matrix[:, shape["id"]])
-            mapped_node = list(
-                filter(lambda n: n["id"] == mapped_node_id, detected_items)
-            )[0]
+            for shape in dataset_items:
+                mapped_node_id = np.argmax(mapping_matrix[:, shape["id"]])
+                mapped_node = list(
+                    filter(lambda n: n["id"] == mapped_node_id, detected_items)
+                )[0]
 
-            # Calculate recall and precision in a per-node basis
-            if shape["type"] == "root" or shape["type"] == "node":
-                recall[img_name][shape["id"]] = 0.0
-                precision[img_name][shape["id"]] = 0.0
+                # Calculate recall and precision in a per-node basis
+                if shape["type"] == "root" or shape["type"] == "node":
+                    recall[img_name][shape["id"]] = 0.0
+                    precision[img_name][shape["id"]] = 0.0
 
-                for child in shape["children"]:
-                    if np.sum(mapping_matrix[:, child["id"]]) > 0:
-                        mapped_shape_id = np.argmax(mapping_matrix[:, child["id"]])
-                        mapped_shape = list(
-                            filter(lambda s: s["id"] == mapped_shape_id, detected_items)
-                        )[0]
+                    for child in shape["children"]:
+                        if np.sum(mapping_matrix[:, child["id"]]) > 0:
+                            mapped_shape_id = np.argmax(mapping_matrix[:, child["id"]])
+                            mapped_shape = list(
+                                filter(lambda s: s["id"] == mapped_shape_id, detected_items)
+                            )[0]
 
-                        if mapped_shape in mapped_node["children"]:
-                            if (not compare_classes) or mapped_shape["label"] == child[
-                                "label"
-                            ]:
-                                recall[img_name][shape["id"]] += 1
-                                precision[img_name][shape["id"]] += 1
+                            if mapped_shape in mapped_node["children"]:
+                                if (not compare_classes) or mapped_shape["label"] == child[
+                                    "label"
+                                ]:
+                                    recall[img_name][shape["id"]] += 1
+                                    precision[img_name][shape["id"]] += 1
+                                else:
+                                    false_det[img_name]["class"] += 1
+
                             else:
-                                false_det[img_name]["class"] += 1
+                                if (not compare_classes) or mapped_shape["label"] == child[
+                                    "label"
+                                ]:
+                                    missed_children[img_name] += 1
 
-                        else:
-                            if (not compare_classes) or mapped_shape["label"] == child[
-                                "label"
-                            ]:
-                                missed_children[img_name] += 1
+                    # Normalize recall and precision and add weights
+                    recall[img_name][shape["id"]] /= len(shape["children"])
+                    if len(mapped_node["children"]) > 0:
+                        precision[img_name][shape["id"]] /= len(mapped_node["children"])
+                    else:
+                        precision[img_name][shape["id"]] = 0
 
-                # Normalize recall and precision and add weights
-                recall[img_name][shape["id"]] /= len(shape["children"])
-                if len(mapped_node["children"]) > 0:
-                    precision[img_name][shape["id"]] /= len(mapped_node["children"])
-                else:
-                    precision[img_name][shape["id"]] = 0
+                    weights.append(len(shape["children"]))
 
-                weights.append(len(shape["children"]))
+                # Calculate the rest of metrics in the same way
+                if np.sum(mapping_matrix[:, shape["id"]]) > 0:
+                    if (not compare_classes) or mapped_node["label"] == shape["label"]:
+                        if mapped_node["depth"] == shape["depth"]:
+                            depth_acc[img_name] += 1
 
-            # Calculate the rest of metrics in the same way
-            if np.sum(mapping_matrix[:, shape["id"]]) > 0:
-                if (not compare_classes) or mapped_node["label"] == shape["label"]:
-                    if mapped_node["depth"] == shape["depth"]:
-                        depth_acc[img_name] += 1
+                        detection_acc[img_name] += 1
 
-                    detection_acc[img_name] += 1
+                    else:
+                        false_det[img_name]["class"] += 1
 
-                else:
-                    false_det[img_name]["class"] += 1
+            false_det[img_name]["segment"] = len(non_duplicate_orphans)
+            false_det[img_name]["total"] += (
+                false_det[img_name]["class"] + false_det[img_name]["segment"]
+            )
 
-        false_det[img_name]["segment"] = len(non_duplicate_orphans)
-        false_det[img_name]["total"] += (
-            false_det[img_name]["class"] + false_det[img_name]["segment"]
-        )
+            # Normalize values
+            # Right now we can use detection_acc as the number of relevant retrieved instances
+            depth_acc[img_name] /= len(dataset_items)
+            detection_acc[img_name] /= len(dataset_items)
 
-        # Normalize values
-        # Right now we can use detection_acc as the number of relevant retrieved instances
-        depth_acc[img_name] /= len(dataset_items)
-        detection_acc[img_name] /= len(dataset_items)
+            false_det[img_name]["total"] /= len(detected_items)
+            false_det[img_name]["class"] /= len(detected_items)
+            false_det[img_name]["segment"] /= len(detected_items)
 
-        false_det[img_name]["total"] /= len(detected_items)
-        false_det[img_name]["class"] /= len(detected_items)
-        false_det[img_name]["segment"] /= len(detected_items)
+            # Weighted average for recall and precision
+            recall[img_name] = np.average(list(recall[img_name].values()), weights=weights)
+            precision[img_name] = np.average(
+                list(precision[img_name].values()), weights=weights
+            )
 
-        # Weighted average for recall and precision
-        recall[img_name] = np.average(list(recall[img_name].values()), weights=weights)
-        precision[img_name] = np.average(
-            list(precision[img_name].values()), weights=weights
-        )
-
-        missed_children[img_name] /= len(dataset_items)
+            missed_children[img_name] /= len(dataset_items)
     # Calculate averaged metrics
     som_detection_metrics["depth_acc"] = np.average(list(depth_acc.values()))
     som_detection_metrics["precision"] = np.average(list(precision.values()))
