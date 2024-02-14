@@ -194,7 +194,7 @@ def save_class_metrics(
     # Save Precision, Recall and F1 Score in csv
     with open("/".join(output_dir.split('/')[:-1]) + "/metrics.csv", "a") as f:
         f.write(
-            f"{output_dir.split('/')[-1]}, {label_precision['all']}, {label_recall['all']}, {label_f1_score['all']},"
+            f"{label_precision['all']}, {label_recall['all']}, {label_f1_score['all']},"
         )
 
     if compare_classes:
