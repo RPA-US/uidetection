@@ -16,6 +16,16 @@ def load_dataset(dataset_path):
         if f.endswith(".json"):
             labeled_json = json.load(open(f"{dataset_path}/{f}"))
 
+            #Convert rectangles into 4 coordinates shapes and keep coordinates as positive numeric values
+            for shape in labeled_json["shapes"]:
+                if shape["shape_type"] == "rectangle" and len(shape["points"]) == 2:
+                    x, y, x2, y2 = [coor for coords in shape["points"] for coor in coords]
+                    shape["points"] = [[x, y], [x2, y], [x2, y2], [x, y2]]
+                    shape["shape_type"] = "polygon"
+                for point in shape["points"]:
+                    point[0] = max(0, point[0])
+                    point[1] = max(0, point[1])
+
             # Order the shapes by area (from largest to smallest) for readability
             labeled_json["shapes"].sort(
                 key=lambda x: Polygon(x["points"]).area, reverse=True
@@ -81,6 +91,18 @@ def coco_to_labelme(coco_anns, type="bbox", id_start=0):
 
 
 def json_inference_to_labelme(anns, type="bbox", id_start=0, remove_holes=False):
+    """
+    Convert JSON inference annotations to LabelMe format.
+
+    Args:
+        anns (list): List of JSON inference annotations.
+        type (str, optional): Type of annotation. Valid types are 'bbox' and 'seg'. Defaults to 'bbox'.
+        id_start (int, optional): Starting ID for the annotations. Defaults to 0.
+        remove_holes (bool, optional): Whether to remove holes in polygons. Defaults to False.
+
+    Returns:
+        list: List of annotations in LabelMe format.
+    """
     res = []
     for i, ann in enumerate(anns):
         if type == "bbox":
