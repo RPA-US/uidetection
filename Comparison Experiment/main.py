@@ -14,7 +14,7 @@ import time
 
 
 def image_experiment(directory):
-    output_dir = "runs/"
+    output_dir = f"runs/{directory.split('/')[-1]}/"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -31,7 +31,7 @@ def image_experiment(directory):
     execution_time = end_time - start_time
     # Save in csv
     with open(output_dir + "metrics.csv", "a") as f:
-        f.write(f"screen2som-no-compare-classes, {execution_time}")
+        f.write(f"screen2som-no-compare-classes, {execution_time},")
 
     # metrics.run_image(screen2som_detections, directory, "screen2som", output_dir)
     metrics.run_image(
@@ -51,7 +51,7 @@ def image_experiment(directory):
     execution_time = end_time - start_time
     # Save in csv
     with open(output_dir + "/metrics.csv", "a") as f:
-        f.write(f"screen2som-optimized-no-compare-classes, {execution_time}")
+        f.write(f"screen2som-optimized-no-compare-classes, {execution_time},")
 
     # metrics.run_image(screen2som_detections, directory, "screen2som-optimized", output_dir)
     metrics.run_image(
@@ -71,7 +71,7 @@ def image_experiment(directory):
     execution_time = end_time - start_time
     # Save in csv
     with open(output_dir + "metrics.csv", "a") as f:
-        f.write(f"yolo-no-compare-classes, {execution_time}")
+        f.write(f"yolo, {execution_time},")
     metrics.run_image(
         yolo_detections, directory, "yolo", output_dir, compare_classes=False
     )
@@ -85,7 +85,7 @@ def image_experiment(directory):
     execution_time = end_time - start_time
     # Save in csv
     with open(output_dir + "metrics.csv", "a") as f:
-        f.write(f"mobileSAM-no-compare-classes, {execution_time}")
+        f.write(f"mobileSAM, {execution_time},")
 
     metrics.run_image(
         mobilesam_detections, directory, "mobileSAM", output_dir, compare_classes=False
@@ -100,7 +100,7 @@ def image_experiment(directory):
     execution_time = end_time - start_time
     # Save in csv
     with open(output_dir + "metrics.csv", "a") as f:
-        f.write(f"UIED-no-compare-classes, {execution_time}")
+        f.write(f"UIED, {execution_time},")
 
     metrics.run_image(
       uied_detections, directory, "UIED", output_dir, compare_classes=False
@@ -115,7 +115,7 @@ def image_experiment(directory):
     execution_time = end_time - start_time
     # Save in csv
     with open(output_dir + "metrics.csv", "a") as f:
-        f.write(f"kevin-moran-no-compare-classes, {execution_time}")
+        f.write(f"kevin-moran, {execution_time},")
 
     metrics.run_image(
         kevin_moran_detections, directory, "kevin_moran", output_dir, compare_classes=False
