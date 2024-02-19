@@ -255,11 +255,11 @@ def save_iou_metrics(
                     det_shape_polygon.intersection(dataset_shape_polygon).area
                     / det_shape_polygon.union(dataset_shape_polygon).area
                 )
-                union_area = det_shape_polygon.union(dataset_shape_polygon).area
+                union_area_perc = det_shape_polygon.union(dataset_shape_polygon).area / dataset_shape_polygon.area
 
                 if np.isclose(iou_acc[img_name][label], 0.0, rtol=1e-09, atol=1e-09):
                     iou_acc[img_name][label] = iou
-                    area_det[img_name][label] = union_area
+                    area_det[img_name][label] = union_area_perc
                 else:
                     # Formula from https://math.stackexchange.com/questions/22348/how-to-add-and-subtract-values-from-an-average
                     iou_acc[img_name][label] = (
@@ -269,7 +269,7 @@ def save_iou_metrics(
 
                     area_det[img_name][label] = (
                         area_det[img_name][label]
-                        + (union_area - area_det[img_name][label]) / mappings_per_label[label]
+                        + (union_area_perc - area_det[img_name][label]) / mappings_per_label[label]
                     )
 
     # Average IOU accuracy
