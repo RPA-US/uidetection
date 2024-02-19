@@ -4,6 +4,7 @@ import json
 import os
 
 import matplotlib.pyplot as plt
+from networkx import union
 import numpy as np
 from hierarchy_constructor import *
 from mapping import *
@@ -213,12 +214,15 @@ def save_iou_metrics(
     detections, dataset_labels, mappings, labels, output_dir, compare_classes
 ):
     iou_acc = dict()
+    area_det = dict()
 
     for img_name in dataset_labels.keys():
         iou_acc[img_name] = dict()
+        area_det[img_name] = dict()
         mappings_per_label = dict()
         for label in labels:
             iou_acc[img_name][label] = 0.0
+            area_det[img_name][label] = 0.0
             mappings_per_label[label] = 0
 
         # Get the mapped pairs from the mapping matrix
@@ -251,9 +255,11 @@ def save_iou_metrics(
                     det_shape_polygon.intersection(dataset_shape_polygon).area
                     / det_shape_polygon.union(dataset_shape_polygon).area
                 )
+                union_area = det_shape_polygon.union(dataset_shape_polygon).area
 
                 if np.isclose(iou_acc[img_name][label], 0.0, rtol=1e-09, atol=1e-09):
                     iou_acc[img_name][label] = iou
+                    area_det[img_name][label] = union_area
                 else:
                     # Formula from https://math.stackexchange.com/questions/22348/how-to-add-and-subtract-values-from-an-average
                     iou_acc[img_name][label] = (
@@ -261,18 +267,28 @@ def save_iou_metrics(
                         + (iou - iou_acc[img_name][label]) / mappings_per_label[label]
                     )
 
+                    area_det[img_name][label] = (
+                        area_det[img_name][label]
+                        + (union_area - area_det[img_name][label]) / mappings_per_label[label]
+                    )
+
     # Average IOU accuracy
     iou_acc_avg = dict()
+    area_det_avg = dict()
     # We map the iuo accuracy dict to a list of values corresponding to the label, the filter by removing the 0 values, then we averagae
     values = list(map(lambda x: x[label], iou_acc.values()))
+    area_det_values = list(map(lambda x: x[label], area_det.values()))
     if compare_classes:
         for label in labels:
             if len(values) == 0:
                 iou_acc_avg[label] = 0.0
+                area_det_avg[label] = 0.0
             else:
                 iou_acc_avg[label] = np.average(list(filter(lambda x: x > 0, values)))
+                area_det_avg[label] = np.average(list(filter(lambda x: x > 0, area_det_values)))
     else:
         iou_acc_avg["all"] = np.average(list(filter(lambda x: x > 0, values)))
+        area_det_avg["all"] = np.average(list(filter(lambda x: x > 0, area_det_values)))
 
     # Save IOU accuracy
     plt.figure(figsize=(10, 5))
@@ -288,7 +304,7 @@ def save_iou_metrics(
     # Save iou in csv
     with open("/".join(output_dir.split('/')[:-1]) + "/metrics.csv", "a") as f:
         f.write(
-            f"{iou_acc_avg['all']},"
+            f"{iou_acc_avg['all']}, {area_det_avg['all']},"
         )
 
 
@@ -488,6 +504,11 @@ def save_som_metrics(
     plt.ylabel("Value")
     plt.savefig(output_dir + "/som_false_detections.png", bbox_inches="tight")
     plt.close()
+
+    with open("/".join(output_dir.split('/')[:-1]) + "/metrics.csv", "a") as f:
+        f.write(
+            f"{som_detection_metrics['depth_acc']}, {som_detection_metrics['precision']}, {som_detection_metrics['recall']}, {som_detection_metrics['f1_score']}, {som_detection_metrics['missed_children']}, {som_detection_metrics['detection_acc']}, {som_detection_metrics['false_det']['total']}, {som_detection_metrics['false_det']['class']}, {som_detection_metrics['false_det']['segment']},"
+        )
 
 
 def calculate_graph_edit_distance(predicted_soms, dataset_soms, mappings, output_dir):
