@@ -218,16 +218,20 @@ def save_iou_metrics(
 
     for img_name in dataset_labels.keys():
         iou_acc[img_name] = dict()
-        area_det[img_name] = dict()
+        area_det[img_name] = 0
         mappings_per_label = dict()
         for label in labels:
             iou_acc[img_name][label] = 0.0
-            area_det[img_name][label] = 0.0
             mappings_per_label[label] = 0
 
         # Get the mapped pairs from the mapping matrix
         mapping_matrix = mappings[img_name]["mapping_matrix"]
         mapped_pairs = np.argwhere(mapping_matrix > 0)
+
+        # Get the total area of the dataset shapes
+        total_area = 0
+        for shape in dataset_labels[img_name]["shapes"]:
+            total_area += Polygon(shape["points"]).area
 
         for pair in mapped_pairs:
             detected_shape = list(
@@ -255,40 +259,32 @@ def save_iou_metrics(
                     det_shape_polygon.intersection(dataset_shape_polygon).area
                     / det_shape_polygon.union(dataset_shape_polygon).area
                 )
-                intersection_area_perc = det_shape_polygon.intersection(dataset_shape_polygon).area / dataset_shape_polygon.area
+                area_det[img_name] += det_shape_polygon.intersection(dataset_shape_polygon).area
 
                 if np.isclose(iou_acc[img_name][label], 0.0, rtol=1e-09, atol=1e-09):
                     iou_acc[img_name][label] = iou
-                    area_det[img_name][label] = intersection_area_perc
                 else:
                     # Formula from https://math.stackexchange.com/questions/22348/how-to-add-and-subtract-values-from-an-average
                     iou_acc[img_name][label] = (
                         iou_acc[img_name][label]
                         + (iou - iou_acc[img_name][label]) / mappings_per_label[label]
                     )
-
-                    area_det[img_name][label] = (
-                        area_det[img_name][label]
-                        + (intersection_area_perc - area_det[img_name][label]) / mappings_per_label[label]
-                    )
+        
+        area_det[img_name] /= total_area
 
     # Average IOU accuracy
     iou_acc_avg = dict()
-    area_det_avg = dict()
+    area_det_avg = np.average(list(area_det.values()))
     # We map the iuo accuracy dict to a list of values corresponding to the label, the filter by removing the 0 values, then we averagae
     values = list(map(lambda x: x[label], iou_acc.values()))
-    area_det_values = list(map(lambda x: x[label], area_det.values()))
     if compare_classes:
         for label in labels:
             if len(values) == 0:
                 iou_acc_avg[label] = 0.0
-                area_det_avg[label] = 0.0
             else:
                 iou_acc_avg[label] = np.average(list(filter(lambda x: x > 0, values)))
-                area_det_avg[label] = np.average(list(filter(lambda x: x > 0, area_det_values)))
     else:
         iou_acc_avg["all"] = np.average(list(filter(lambda x: x > 0, values)))
-        area_det_avg["all"] = np.average(list(filter(lambda x: x > 0, area_det_values)))
 
     # Save IOU accuracy
     plt.figure(figsize=(10, 5))
@@ -304,7 +300,7 @@ def save_iou_metrics(
     # Save iou in csv
     with open("/".join(output_dir.split('/')[:-1]) + "/metrics.csv", "a") as f:
         f.write(
-            f"{iou_acc_avg['all']}, {area_det_avg['all']},"
+            f"{iou_acc_avg['all']}, {area_det_avg},"
         )
 
 
