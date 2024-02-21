@@ -283,7 +283,7 @@ def save_iou_metrics(
 
     # Save IOU accuracy
     plt.figure(figsize=(10, 5))
-    plt.bar(iou_acc_avg.keys(), iou_acc_avg)
+    plt.bar(["Avg. IoU"], [iou_acc_avg])
     plt.xticks(rotation=90)
     plt.ylim(0, 1)
     plt.title("IOU accuracy per label")
