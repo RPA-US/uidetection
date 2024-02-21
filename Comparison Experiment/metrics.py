@@ -278,7 +278,7 @@ def save_iou_metrics(
         area_det[img_name] /= total_area
 
     # Average IOU accuracy
-    iou_acc_avg = np.average(list(iou_acc_avg.values()))
+    iou_acc_avg = np.average(list(iou_acc.values()))
     area_det_avg = np.average(list(area_det.values()))
 
     # Save IOU accuracy
