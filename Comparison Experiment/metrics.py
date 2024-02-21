@@ -219,7 +219,7 @@ def save_iou_metrics(
     for img_name in dataset_labels.keys():
         iou_acc[img_name] = 0.0
         area_det[img_name] = 0
-        mappings = 0
+        num_mappings = 0
 
         # Get the mapped pairs from the mapping matrix
         mapping_matrix = mappings[img_name]["mapping_matrix"]
@@ -252,7 +252,7 @@ def save_iou_metrics(
             ]:
                 det_shape_polygon = Polygon(detected_shape["points"])
                 dataset_shape_polygon = Polygon(dataset_shape["points"])
-                mappings += 1
+                num_mappings += 1
 
                 iou = (
                     det_shape_polygon.intersection(dataset_shape_polygon).area
@@ -266,13 +266,13 @@ def save_iou_metrics(
                     # Formula from https://math.stackexchange.com/questions/22348/how-to-add-and-subtract-values-from-an-average
                     iou_acc[img_name] = (
                         iou_acc[img_name]
-                        + (iou - iou_acc[img_name]) / mappings
+                        + (iou - iou_acc[img_name]) / num_mappings
                     )
         
-        for i, non_mapped_shape in enumerate(non_mapped_shapes):
+        for i, _ in enumerate(non_mapped_shapes):
             iou_acc[img_name] = (
                 iou_acc[img_name]
-                + (0.0 - iou_acc[img_name]) / (mappings + i + 1)
+                + (0.0 - iou_acc[img_name]) / (num_mappings + i + 1)
             )
         
         area_det[img_name] /= total_area
