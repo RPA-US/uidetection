@@ -1,16 +1,17 @@
-import getopt, sys
+import getopt
 import logging as log
+import os
+import sys
 import time
 from turtle import st
 
-import screen2som
-import yolo
-import mobileSAM
-import uied
 import kevin_moran
 import metrics
-import os
-import time
+import mobileSAM
+import screen2som
+import uied
+import yolo
+from utils import *
 
 
 def image_experiment(directory):
@@ -24,15 +25,15 @@ def image_experiment(directory):
 
     # Run screen2som
     log.info("Running screen2som")
-
     start_time = time.time()
     screen2som_detections = screen2som.predict(directory, output_dir + "screen2som")
     end_time = time.time()
     execution_time = end_time - start_time
+    # Save borders
+    save_detections(output_dir + "screen2som/detections", directory, output_dir + "screen2som/borders")
     # Save in csv
     with open(output_dir + "metrics.csv", "a") as f:
         f.write(f"screen2som-no-compare-classes, {execution_time},")
-
     # metrics.run_image(screen2som_detections, directory, "screen2som", output_dir)
     metrics.run_image(
         screen2som_detections,
@@ -42,33 +43,14 @@ def image_experiment(directory):
         compare_classes=False,
     )
 
-    # Run optimized screen2som
-    log.info("Running optimized screen2som")
-
-    start_time = time.time()
-    screen2som_detections = screen2som.predict(directory, output_dir + "screen2som-optimized", optimized=True)
-    end_time = time.time()
-    execution_time = end_time - start_time
-    # Save in csv
-    with open(output_dir + "metrics.csv", "a") as f:
-        f.write(f"screen2som-optimized-no-compare-classes, {execution_time},")
-
-    # metrics.run_image(screen2som_detections, directory, "screen2som-optimized", output_dir)
-    metrics.run_image(
-        screen2som_detections,
-        directory,
-        "screen2som-optimized-no-compare-classes",
-        output_dir,
-        compare_classes=False,
-    )
-
     # Run YOLO detections
     log.info("Running YOLO")
-
     start_time = time.time()
     yolo_detections = yolo.predict(directory, output_dir)
     end_time = time.time()
     execution_time = end_time - start_time
+    # Save borders
+    save_detections(output_dir + "yolo/detections", directory, output_dir + "yolo/borders")
     # Save in csv
     with open(output_dir + "metrics.csv", "a") as f:
         f.write(f"yolo, {execution_time},")
@@ -78,45 +60,45 @@ def image_experiment(directory):
 
     # Run MobileSAM detections
     log.info("Running MobileSAM")
-
     start_time = time.time()
     mobilesam_detections = mobileSAM.predict(directory, output_dir)
     end_time = time.time()
     execution_time = end_time - start_time
+    # Save borders
+    save_detections(output_dir + "movileSAM/detections", directory, output_dir + "movileSAM/borders")
     # Save in csv
     with open(output_dir + "metrics.csv", "a") as f:
         f.write(f"mobileSAM, {execution_time},")
-
     metrics.run_image(
         mobilesam_detections, directory, "mobileSAM", output_dir, compare_classes=False
     )
 
     # Run UIED detections
     log.info("Running UIED")
-
     start_time = time.time()
     uied_detections = uied.batch_component_detection(directory, output_dir)
     end_time = time.time()
     execution_time = end_time - start_time
+    # Save borders
+    save_detections(output_dir + "UIED/detections", directory, output_dir + "UIED/borders")
     # Save in csv
     with open(output_dir + "metrics.csv", "a") as f:
         f.write(f"UIED, {execution_time},")
-
     metrics.run_image(
       uied_detections, directory, "UIED", output_dir, compare_classes=False
     )
 
     # Run kevin-moran detections
     log.info("Running kevin-moran")
-
     start_time = time.time()
     kevin_moran_detections = kevin_moran.predict(directory, output_dir)
     end_time = time.time()
     execution_time = end_time - start_time
+    # Save borders
+    save_detections(output_dir + "kevin_moran/detections", directory, output_dir + "kevin_moran/borders")
     # Save in csv
     with open(output_dir + "metrics.csv", "a") as f:
         f.write(f"kevin-moran, {execution_time},")
-
     metrics.run_image(
         kevin_moran_detections, directory, "kevin_moran", output_dir, compare_classes=False
     )

@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 from shapely.geometry import Polygon
 from tqdm import tqdm
-from utils import show_mappings
 
 def predict(directory, output_dir, cropping_threshold=2):
     images = dict()

@@ -1,5 +1,6 @@
 import json
 import os
+from charset_normalizer import detect
 
 import numpy as np
 import torch
@@ -231,27 +232,39 @@ def sahi_predictions(
     return shapes
 
 
-def show_mappings(img_path, detected_shapes):
-    tint_colors = {}
-    for i in range(len(detected_shapes)):
-        if detected_shapes[i]["label"] not in tint_colors:
-            tint_colors[detected_shapes[i]["label"]] = (
-                np.random.randint(0, 255),
-                np.random.randint(0, 255),
-                np.random.randint(0, 255),
-            )
+def save_detections(detections_path, img_dir, output_dir):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-    img = cv2.imread(img_path)
-    for i in range(len(detected_shapes)):
-        # Show both polygons (labeled and detected)
-        cv2.polylines(
-            img,
-            np.int32([detected_shapes[i]["points"]]),
-            True,
-            tint_colors[detected_shapes[i]["label"]],
-            2,
-        )
+    for f in os.listdir(detections_path):
+        if f.endswith(".json"):
+            with open(f"{detections_path}/{f}") as json_file:
+                data = json.load(json_file)
+            
+            detected_shapes = data["shapes"]
 
-    cv2.imshow("mappings", img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+            img_name = "_".join(f.split("_")[1:])
+            img_name = img_name.split(".")[0] + ".png"
+            img_path = f"{img_dir}/{img_name}"
+
+            tint_colors = {}
+            for i in range(len(detected_shapes)):
+                if detected_shapes[i]["label"] not in tint_colors:
+                    tint_colors[detected_shapes[i]["label"]] = (
+                        np.random.randint(0, 255),
+                        np.random.randint(0, 255),
+                        np.random.randint(0, 255),
+                    )
+
+            img = cv2.imread(img_path)
+            for i in range(len(detected_shapes)):
+                # Show both polygons (labeled and detected)
+                cv2.polylines(
+                    img,
+                    np.int32([detected_shapes[i]["points"]]),
+                    True,
+                    tint_colors[detected_shapes[i]["label"]],
+                    2,
+                )
+
+            cv2.imwrite(f"{output_dir}/{img_name}", img)
