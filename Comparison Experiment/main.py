@@ -147,7 +147,7 @@ if __name__ == "__main__":
                 image_experiment(current_value)
             elif current_argument in ("-i", "--iterative"):
                 for dir in os.listdir(current_value):
-                    image_experiment(os.join(current_value, dir).replace("\\", "/"))
+                    image_experiment(os.path.join(current_value, dir).replace("\\", "/"))
 
     except getopt.error as err:
         # output error, and return with an error code
