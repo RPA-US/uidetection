@@ -2,13 +2,14 @@ from audioop import avg
 import copy
 import json
 import os
+import re
 
 import matplotlib.pyplot as plt
 from networkx import union
 import numpy as np
 from hierarchy_constructor import *
 from mapping import *
-from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.metrics import ConfusionMatrixDisplay, f1_score
 from utils import *
 
 from zss import simple_distance, Node
@@ -16,7 +17,7 @@ from zss import simple_distance, Node
 def run_image(detections, directory, technique, output_dir, compare_classes=True):
     # Create csv to store precision, recall, f1 score and iou accuracy per technique
     with open(output_dir + technique + "/metrics.csv", "w") as f:
-        f.write("Image, Time, Avg Precision, Avg Recall, Avg F1 Score, Avg IOU Accuracy, Avg Area Perc. Det., Avg SOM Depth Acc,  Avg SOM Press, Avg SOM Rec., Avg SOM F1, Avg SOM missed children, Avg SOM Det. Acc., Avg SOM False Pos., Avg SOM False Class Pos, Avg SOM False Seg. Pos., Avg Edit Tree Distance\n")
+        f.write("Image, Precision, Recall, F1 Score, IOU Accuracy, Area Perc. Det., SOM Depth Acc,  SOM Press, SOM Rec., SOM F1, SOM missed children, SOM Det. Acc., SOM False Pos., SOM False Class Pos, SOM False Seg. Pos., Edit Tree Distance\n")
 
     dataset_labels = load_dataset(directory)
     dataset_soms = labels_to_soms(copy.deepcopy(dataset_labels))
@@ -42,7 +43,7 @@ def run_image(detections, directory, technique, output_dir, compare_classes=True
             labels.add(shape["label"])
     labels = list(labels)
 
-    save_class_metrics(
+    pres_dic, rec_dic, f1_dic = save_class_metrics(
         detections,
         dataset_labels,
         mappings,
@@ -51,7 +52,7 @@ def run_image(detections, directory, technique, output_dir, compare_classes=True
         compare_classes,
     )
 
-    save_iou_metrics(
+    iou_dic, area_dic = save_iou_metrics(
         detections,
         dataset_labels,
         mappings,
@@ -60,7 +61,7 @@ def run_image(detections, directory, technique, output_dir, compare_classes=True
         compare_classes,
     )
     
-    save_som_metrics(
+    som_depth_acc, som_precision, som_recall, som_f1_score, som_missed_children, som_detection_acc, som_false_det = save_som_metrics(
         predicted_soms,
         dataset_soms,
         mappings,
@@ -68,12 +69,20 @@ def run_image(detections, directory, technique, output_dir, compare_classes=True
         compare_classes,
     )
 
-    calculate_graph_edit_distance(
+    edit_dist_dic = calculate_graph_edit_distance(
         predicted_soms,
         dataset_soms,
         mappings,
         output_dir + f"/{technique}",
     )
+
+    for img_name in dataset_labels.keys():
+        # Save Precision, Recall and F1 Score in csv
+        with open("/".join(output_dir.split('/')) + "/metrics.csv", "a") as f:
+            f.write(
+                f"{img_name}, {pres_dic[img_name]}, {rec_dic[img_name]}, {f1_dic[img_name]}, {iou_dic[img_name]}, {area_dic[img_name]}, {som_depth_acc[img_name]}, {som_precision[img_name]}, {som_recall[img_name]}, {som_f1_score[img_name]}, {som_missed_children[img_name]}, {som_detection_acc[img_name]}, {som_false_det[img_name]['total']}, {som_false_det[img_name]['class']}, {som_false_det[img_name]['segment']}, {edit_dist_dic[img_name]}\n"
+            )
+
 
 
 def save_class_metrics(
@@ -130,6 +139,8 @@ def save_class_metrics(
 
                     precision[img_name] += 1
                     recall[img_name] += 1
+        
+        f1_score[img_name] = (2 * precision[img_name] * recall[img_name]) / (precision[img_name] + recall[img_name] + 1e-10)
 
     if compare_classes:
         label_precision = {
@@ -214,18 +225,6 @@ def save_class_metrics(
             f"{label_precision['all']}, {label_recall['all']}, {label_f1_score['all']},"
         )
     
-    for img_name in dataset_labels.keys():
-        avg_press = precision[img_name] / len(detections[img_name]["shapes"])
-        avg_recall = recall[img_name] / len(dataset_labels[img_name]["shapes"])
-        f1_score[img_name] = (2 * avg_press * avg_recall) / (avg_press + avg_recall + 1e-10)
-
-        # Save Precision, Recall and F1 Score in csv
-        with open("/".join(output_dir.split('/')) + "/metrics.csv", "a") as f:
-            f.write(
-                f"{img_name}, {avg_press}, {avg_recall}, {f1_score[img_name]},"
-            )
-
-
     if compare_classes:
         # Save Confusion Matrix
         plt.rcParams["figure.figsize"] = [20, 10]
@@ -236,6 +235,8 @@ def save_class_metrics(
             xticks_rotation=90,
         )
         cm.figure_.savefig(output_dir + "/confusion_matrix.png", bbox_inches="tight")
+    
+    return precision, recall, f1_score
 
 
 def save_iou_metrics(
@@ -326,14 +327,7 @@ def save_iou_metrics(
             f"{iou_acc_avg}, {area_det_avg},"
         )
 
-    for img_name in dataset_labels.keys():
-
-        # Save Precision, Recall and F1 Score in csv
-        with open("/".join(output_dir.split('/')) + "/metrics.csv", "a") as f:
-            f.write(
-                f"{iou_acc[img_name]}, {area_det[img_name]}, "
-            )
-
+    return iou_acc, area_det
 
 
 def get_tree_items(tree):
@@ -538,13 +532,11 @@ def save_som_metrics(
             f"{som_detection_metrics['depth_acc']}, {som_detection_metrics['precision']}, {som_detection_metrics['recall']}, {som_detection_metrics['f1_score']}, {som_detection_metrics['missed_children']}, {som_detection_metrics['detection_acc']}, {som_detection_metrics['false_det']['total']}, {som_detection_metrics['false_det']['class']}, {som_detection_metrics['false_det']['segment']},"
         )
 
+    f1_score = dict()
     for img_name in dataset_soms_items.keys():
-        f1_score = (2 * precision[img_name] * recall[img_name]) / (precision[img_name] + recall[img_name] + 1e-10)
-        # Save Precision, Recall and F1 Score in csv
-        with open("/".join(output_dir.split('/')) + "/metrics.csv", "a") as f:
-            f.write(
-                f"{depth_acc[img_name]}, {precision[img_name]}, {recall[img_name]}, {f1_score}, {missed_children[img_name]}, {detection_acc[img_name]}, {false_det[img_name]['total']}, {false_det[img_name]['class']}, {false_det[img_name]['segment']}, "
-            )
+        f1_score[img_name] = (2 * precision[img_name] * recall[img_name]) / (precision[img_name] + recall[img_name] + 1e-10)
+
+    return depth_acc, precision, recall, f1_score, missed_children, detection_acc, false_det
 
 
 
@@ -563,16 +555,12 @@ def calculate_graph_edit_distance(predicted_soms, dataset_soms, mappings, output
     avg_graph_edit_distance = np.average(list(graph_edit_distances.values()))
 
     # Save to csv
-    with open("/".join(output_dir.split('/')[:-1]) + "/metrics.csv", "a") as f:
+    with open("/".join(output_dir.split('/')) + "/metrics.csv", "a") as f:
         f.write(
             f"{avg_graph_edit_distance}\n"
         )
     
-    for img in graph_edit_distances.keys():
-        with open("/".join(output_dir.split('/')) + "/metrics.csv", "a") as f:
-            f.write(
-                f"{graph_edit_distances[img]}\n"
-            )
+    return graph_edit_distances
 
 
 def get_digraphs(predicted_soms, dataset_soms, mappings):
