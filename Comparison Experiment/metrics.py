@@ -16,6 +16,8 @@ from zss import simple_distance, Node
 
 def run_image(detections, directory, technique, output_dir, compare_classes=True):
     # Create csv to store precision, recall, f1 score and iou accuracy per technique
+    if not os.path.exists(output_dir + technique):
+        os.makedirs(output_dir + technique)
     with open(output_dir + technique + "/metrics.csv", "w") as f:
         f.write("Image, Precision, Recall, F1 Score, IOU Accuracy, Area Perc. Det., SOM Depth Acc,  SOM Press, SOM Rec., SOM F1, SOM missed children, SOM Det. Acc., SOM False Pos., SOM False Class Pos, SOM False Seg. Pos., Edit Tree Distance\n")
 
