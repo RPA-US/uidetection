@@ -140,6 +140,8 @@ def save_class_metrics(
                     precision[img_name] += 1
                     recall[img_name] += 1
         
+        precision[img_name] /= len(det_shapes)
+        recall[img_name] /= len(shapes)
         f1_score[img_name] = (2 * precision[img_name] * recall[img_name]) / (precision[img_name] + recall[img_name] + 1e-10)
 
     if compare_classes:
@@ -370,6 +372,7 @@ def save_som_metrics(
 
     depth_acc = dict()
     recall = dict()
+    f1_score = dict()
     precision = dict()
     missed_children = dict()
     detection_acc = dict()
@@ -472,6 +475,9 @@ def save_som_metrics(
             precision[img_name] = np.average(
                 list(precision[img_name].values()), weights=weights
             )
+            f1_score[img_name] = (
+                2 * precision[img_name] * recall[img_name]
+            ) / (precision[img_name] + recall[img_name] + 1e-10)
 
             missed_children[img_name] /= len(dataset_items)
     # Calculate averaged metrics
@@ -531,10 +537,6 @@ def save_som_metrics(
         f.write(
             f"{som_detection_metrics['depth_acc']}, {som_detection_metrics['precision']}, {som_detection_metrics['recall']}, {som_detection_metrics['f1_score']}, {som_detection_metrics['missed_children']}, {som_detection_metrics['detection_acc']}, {som_detection_metrics['false_det']['total']}, {som_detection_metrics['false_det']['class']}, {som_detection_metrics['false_det']['segment']},"
         )
-
-    f1_score = dict()
-    for img_name in dataset_soms_items.keys():
-        f1_score[img_name] = (2 * precision[img_name] * recall[img_name]) / (precision[img_name] + recall[img_name] + 1e-10)
 
     return depth_acc, precision, recall, f1_score, missed_children, detection_acc, false_det
 
