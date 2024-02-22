@@ -65,7 +65,7 @@ def image_experiment(directory):
     end_time = time.time()
     execution_time = end_time - start_time
     # Save borders
-    save_detections(output_dir + "movileSAM/detections", directory, output_dir + "movileSAM/borders")
+    save_detections(output_dir + "mobileSAM/detections", directory, output_dir + "mobileSAM/borders")
     # Save in csv
     with open(output_dir + "metrics.csv", "a") as f:
         f.write(f"mobileSAM, {execution_time},")
