@@ -144,12 +144,10 @@ if __name__ == "__main__":
 
             elif current_argument in ("-d", "--directory"):
                 # If argument "-i" or "--iterative" is passed, loop over the images
-                if ("--iterative", "") in arguments or ("-i", "") in arguments:
-                    for dir in os.listdir(current_value):
-                        image_experiment(os.join(current_value, dir).replace("\\", "/"))
-                else:
-                    image_experiment(current_value)
-            
+                image_experiment(current_value)
+            elif current_argument in ("-i", "--iterative"):
+                for dir in os.listdir(current_value):
+                    image_experiment(os.join(current_value, dir).replace("\\", "/"))
 
     except getopt.error as err:
         # output error, and return with an error code
