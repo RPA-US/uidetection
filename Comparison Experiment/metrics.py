@@ -140,8 +140,8 @@ def save_class_metrics(
                     precision[img_name] += 1
                     recall[img_name] += 1
         
-        precision[img_name] /= len(det_shapes)
-        recall[img_name] /= len(shapes)
+        precision[img_name] /= len(det_shapes) + 1e-10
+        recall[img_name] /= len(shapes) + 1e-10
         f1_score[img_name] = (2 * precision[img_name] * recall[img_name]) / (precision[img_name] + recall[img_name] + 1e-10)
 
     if compare_classes:
