@@ -143,7 +143,13 @@ if __name__ == "__main__":
                 print("Displaying Help")
 
             elif current_argument in ("-d", "--directory"):
-                image_experiment(current_value)
+                # If argument "-i" or "--iterative" is passed, loop over the images
+                if ("--iterative", "") in arguments or ("-i", "") in arguments:
+                    for dir in os.listdir(current_value):
+                        image_experiment(os.join(current_value, dir).replace("\\", "/"))
+                else:
+                    image_experiment(current_value)
+            
 
     except getopt.error as err:
         # output error, and return with an error code
