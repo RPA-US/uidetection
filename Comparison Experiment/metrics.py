@@ -379,23 +379,24 @@ def save_som_metrics(
     false_det = dict()
 
     for img_name in dataset_soms_items.keys():
+        depth_acc[img_name] = 0.0
+        # Recall and precision are calculated per node and then weighted averaged by the number of children
+        recall[img_name] = dict()
+        precision[img_name] = dict()
+        f1_score[img_name] = 0.0
+
+        # Weights for recall and precision
+        weights = []
+
+        missed_children[img_name] = 0.0
+        detection_acc[img_name] = 0.0
+        false_det[img_name] = {"total": 0, "class": 0.0, "segment": 0.0}
+
+        mapping_matrix = mappings[img_name]["mapping_matrix"]
+        orphan_detections = mappings[img_name]["orphan_detection"]
+        duplicates = mappings[img_name]["duplicates"]
+
         if len(detected_soms_items[img_name]) != 0:
-            depth_acc[img_name] = 0.0
-            # Recall and precision are calculated per node and then weighted averaged by the number of children
-            recall[img_name] = dict()
-            precision[img_name] = dict()
-
-            # Weights for recall and precision
-            weights = []
-
-            missed_children[img_name] = 0.0
-            detection_acc[img_name] = 0.0
-            false_det[img_name] = {"total": 0, "class": 0.0, "segment": 0.0}
-
-            mapping_matrix = mappings[img_name]["mapping_matrix"]
-            orphan_detections = mappings[img_name]["orphan_detection"]
-            duplicates = mappings[img_name]["duplicates"]
-
             non_duplicate_orphans = list(
                 filter(lambda x: not any(x in d for d in duplicates), orphan_detections)
             )
@@ -470,16 +471,16 @@ def save_som_metrics(
             false_det[img_name]["class"] /= len(detected_items)
             false_det[img_name]["segment"] /= len(detected_items)
 
-            # Weighted average for recall and precision
-            recall[img_name] = np.average(list(recall[img_name].values()), weights=weights)
-            precision[img_name] = np.average(
-                list(precision[img_name].values()), weights=weights
-            )
-            f1_score[img_name] = (
-                2 * precision[img_name] * recall[img_name]
-            ) / (precision[img_name] + recall[img_name] + 1e-10)
-
             missed_children[img_name] /= len(dataset_items)
+
+        # Weighted average for recall and precision
+        recall[img_name] = np.average(list(recall[img_name].values()), weights=weights) if len(weights) > 0 else 0
+        precision[img_name] = np.average(
+            list(precision[img_name].values()), weights=weights
+        ) if len(weights) > 0 else 0
+        f1_score[img_name] = (
+            2 * precision[img_name] * recall[img_name]
+        ) / (precision[img_name] + recall[img_name] + 1e-10)
     # Calculate averaged metrics
     som_detection_metrics["depth_acc"] = np.average(list(depth_acc.values()))
     som_detection_metrics["precision"] = np.average(list(precision.values()))
