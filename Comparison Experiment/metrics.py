@@ -78,7 +78,7 @@ def run_image(detections, directory, technique, output_dir, compare_classes=True
 
     for img_name in dataset_labels.keys():
         # Save Precision, Recall and F1 Score in csv
-        with open("/".join(output_dir.split('/')) + "/metrics.csv", "a") as f:
+        with open("/".join(output_dir.split('/')) + "/" + technique + "/metrics.csv", "a") as f:
             f.write(
                 f"{img_name}, {pres_dic[img_name]}, {rec_dic[img_name]}, {f1_dic[img_name]}, {iou_dic[img_name]}, {area_dic[img_name]}, {som_depth_acc[img_name]}, {som_precision[img_name]}, {som_recall[img_name]}, {som_f1_score[img_name]}, {som_missed_children[img_name]}, {som_detection_acc[img_name]}, {som_false_det[img_name]['total']}, {som_false_det[img_name]['class']}, {som_false_det[img_name]['segment']}, {edit_dist_dic[img_name]}\n"
             )
