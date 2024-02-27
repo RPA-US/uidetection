@@ -110,7 +110,7 @@ if __name__ == "__main__":
     argument_list = sys.argv[1:]
 
     # Options
-    options = "hdi:"
+    options = "hd:i:"
 
     # Long options
     long_options = ["help", "directory"]
