@@ -10,6 +10,19 @@ from sahi.predict import get_sliced_prediction
 from shapely.geometry import Polygon
 from ultralytics import YOLO
 
+def resize_detetions(detections, new_width, new_height):
+    # Loop over all the bounding boxes
+    for shape in detections["shapes"]:
+        for point in shape["points"]:
+            # Update the point to match new dimensions
+            point[0] = point[0] * new_width / detections["imageWidth"]
+            point[1] = point[1] * new_height / detections["imageHeight"]
+
+    # Update the size
+    detections["imageWidth"] = new_width
+    detections["imageHeight"] = new_height
+
+    return detections
 
 def load_dataset(dataset_path):
     dataset_labels = dict()
