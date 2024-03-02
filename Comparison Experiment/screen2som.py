@@ -34,7 +34,7 @@ def predict(directory, output_dir, optimized=False, sahi=True):
     for img_name, img_path in tqdm(images.items(), desc="Running Screen2SOM predictions"):
         detections[img_name] = dict()
         image_pil_og = cv2.imread(img_path)
-        image_pil = cv2.resize(image_pil, (640, 360))
+        image_pil = cv2.resize(image_pil_og, (640, 360))
 
         if optimized:
             # Elements level preditions
