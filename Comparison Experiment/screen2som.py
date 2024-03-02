@@ -1,4 +1,5 @@
 import json
+import copy
 
 import cv2
 from tqdm import tqdm
@@ -91,7 +92,7 @@ def predict(directory, output_dir, optimized=False, sahi=True):
         )
         detections[img_name]["shapes"].extend(toplevel_shapes)
 
-        detections = resize_detections(detections, image_pil_og.shape[1], image_pil_og.shape[0])
+        detections[img_name] = resize_detections(copy.deepcopy(detections[img_name]), image_pil_og.shape[1], image_pil_og.shape[0])
 
         # Save detections
         json.dump(

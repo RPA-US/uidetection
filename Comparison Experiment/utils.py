@@ -10,7 +10,7 @@ from sahi.predict import get_sliced_prediction
 from shapely.geometry import Polygon
 from ultralytics import YOLO
 
-def resize_detetions(detections, new_width, new_height):
+def resize_detections(detections, new_width, new_height):
     # Loop over all the bounding boxes
     for shape in detections["shapes"]:
         for point in shape["points"]:
