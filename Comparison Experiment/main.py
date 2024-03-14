@@ -21,7 +21,7 @@ def image_experiment(directory):
 
     # Create csv to store precision, recall, f1 score and iou accuracy per technique
     with open(output_dir + "metrics.csv", "w") as f:
-        f.write("Technique, Time, Avg Precision, Avg Recall, Avg F1 Score, Avg IOU Accuracy, Avg Area Perc. Det., Avg SOM Depth Acc,  Avg SOM Press, Avg SOM Rec., Avg SOM F1, Avg SOM missed children, Avg SOM Det. Acc., Avg SOM False Pos., Avg SOM False Class Pos, Avg SOM False Seg. Pos., Avg Edit Tree Distance\n")
+        f.write("Technique, Time, Avg Precision, Avg Recall, Avg F1 Score, Avg IOU Accuracy, Avg Area Perc. Det., Avg SOM Depth Acc,  Avg SOM Press, Avg SOM Rec., Avg SOM F1, Avg SOM missed children, Avg SOM Det. Acc., Avg SOM False Pos., Avg SOM False Class Pos, Avg SOM False Seg. Pos.\n")
 
     # Run screen2som
     log.info("Running screen2som")
