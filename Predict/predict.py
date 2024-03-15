@@ -17,26 +17,22 @@ import copy
 from hierarchy_constructor import *
 from utils import *
 
-ELEMENTS_MODEL = "Models/trained/Yolov8n-seg - Elements/best.pt"
-CONTAINER_MODEL = "Models/trained/CustomSAM - Container/best.pt"
-TEXT_MODEL = "Models/trained/Yolov8s - Text/best.pt"
-APPLEVEL_MODEL = "Models/trained/Yolov8s-seg - AppLevel/best.pt"
-TOP_MODEL = "Models/trained/Yolov8s-seg - Top/best.pt"
-
-CLUSTER_ELEMENTS_MODEL = "Models/cluster/elements-cluster.pt"
-CLUSTER_CONTAINER_MODEL = "Models/cluster/container-cluster.pt"
-CLUSTER_TEXT_MODEL = "Models/cluster/text-cluster.pt"
-CLUSTER_APPLEVEL_MODEL = "Models/cluster/applevel-cluster.pt"
-CLUSTER_TOP_MODEL = "Models/cluster/toplevel-cluster.pt"
+ELEMENTS_MODEL = "Models/elements.pt"
+TEXT_MODEL = "Models/text.pt"
+CONTAINER_MODEL = "Models/container.pt"
+APPLEVEL_MODEL = "Models/applevel.pt"
+TOP_MODEL = "Models/toplevel.pt"
 
 def predict(image_path):
     image_pil = cv2.imread(image_path)
+    image_pil = cv2.resize(image_pil, (640, 360))
+    cv2.imwrite(image_path, image_pil)
 
     detections = dict()
 
     # Elements level preditions
     elements_shapes = sahi_predictions(
-                CLUSTER_ELEMENTS_MODEL, image_pil, 240, 240, 0.3, "bbox", 0, 0.4
+                ELEMENTS_MODEL, image_pil, 240, 240, 0.3, "bbox", 0, 0.4
     )
     detections["shapes"] = elements_shapes
     detections["imageWidth"] = image_pil.shape[1]
@@ -44,7 +40,7 @@ def predict(image_path):
 
     # Text level predictions
     text_shapes = sahi_predictions(
-        CLUSTER_TEXT_MODEL, image_pil, 240, 240, 0.3, "bbox", len(detections["shapes"]), 0.2
+        TEXT_MODEL, image_pil, 240, 240, 0.3, "bbox", len(detections["shapes"]), 0.2
     )
     detections["shapes"].extend(text_shapes)
 
@@ -56,13 +52,13 @@ def predict(image_path):
 
     # Application level predictions
     applevel_shapes = yolo_prediction(
-        CLUSTER_APPLEVEL_MODEL, image_pil, "seg", len(detections["shapes"]), 0.3
+        APPLEVEL_MODEL, image_pil, "seg", len(detections["shapes"]), 0.4
     )
     detections["shapes"].extend(applevel_shapes)
 
     # Top level predictions
     toplevel_shapes = yolo_prediction(
-        TOP_MODEL, image_pil, "seg", len(detections["shapes"]), 0.4
+        TOP_MODEL, image_pil, "seg", len(detections["shapes"]), 0.6
     )
     detections["shapes"].extend(toplevel_shapes)
 
